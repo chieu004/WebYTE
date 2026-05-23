@@ -1,0 +1,237 @@
+@page "/doctor/prescriptions/create/{MedicalRecordId:guid}"
+@using WebYTE.Application.DTOs.Prescription
+@using WebYTE.Application.DTOs.Medication
+@using WebYTE.Application.DTOs.MedicalRecord
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Doctor")]
+
+<PageTitle>Kê Đơn Thuốc</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Medication" Size="Size.Large" Class="mr-2" />
+        Kê Đơn Thuốc
+    </MudText>
+
+    @if (isLoadingData)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (medicalRecord == null)
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy bệnh án.</MudAlert>
+    }
+    else
+    {
+        <MudCard Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Thông tin bệnh án</MudText>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudText><strong>Bệnh nhân:</strong> @medicalRecord.PatientName</MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudText><strong>Chẩn đoán:</strong> @medicalRecord.Diagnosis</MudText>
+                    </MudItem>
+                </MudGrid>
+
+                <MudDivider Class="my-6" />
+
+                <MudText Typo="Typo.h6" Class="mb-4">Đơn thuốc</MudText>
+                
+                <MudTextField @bind-Value="model.Notes" 
+                              Label="Ghi chú đơn thuốc" 
+                              Lines="2"
+                              Variant="Variant.Outlined" 
+                              Class="mb-4" />
+
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Danh sách thuốc</MudText>
+                
+                @foreach (var (detail, index) in model.Details.Select((d, i) => (d, i)))
+                {
+                    <MudPaper Elevation="1" Class="pa-4 mb-4">
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSelect @bind-Value="detail.MedicationId" 
+                                           Label="Thuốc" 
+                                           Required="true"
+                                           Variant="Variant.Outlined">
+                                    @foreach (var med in medications)
+                                    {
+                                        <MudSelectItem Value="@med.Id">@med.Name (@med.Unit)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudNumericField @bind-Value="detail.Quantity" 
+                                                 Label="Số lượng" 
+                                                 Min="1"
+                                                 Required="true"
+                                                 Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudTextField @bind-Value="detail.Dosage" 
+                                              Label="Liều lượng" 
+                                              Required="true"
+                                              Variant="Variant.Outlined"
+                                              Placeholder="VD: 1 viên/lần, 2 lần/ngày" />
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudTextField @bind-Value="detail.Instructions" 
+                                              Label="Hướng dẫn" 
+                                              Variant="Variant.Outlined"
+                                              Placeholder="VD: Uống sau ăn" />
+                            </MudItem>
+                            <MudItem xs="12" md="1" Class="d-flex align-center">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                               Color="Color.Error" 
+                                               OnClick="@(() => RemoveMedication(index))" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="AddMedication"
+                           Class="mb-4">
+                    Thêm thuốc
+                </MudButton>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           Disabled="@(!CanSubmit() || isSubmitting)"
+                           OnClick="HandleSubmit">
+                    @if (isSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ml-2">Đang lưu...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Lưu Đơn Thuốc</MudText>
+                    }
+                </MudButton>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default" 
+                           OnClick="Cancel">Hủy</MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid MedicalRecordId { get; set; }
+
+    private MedicalRecordDto? medicalRecord;
+    private List<MedicationDto> medications = new();
+    private CreatePrescriptionDto model = new();
+    private bool isLoadingData = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        model.MedicalRecordId = MedicalRecordId;
+        AddMedication(); // Add first medication row
+    }
+
+    private async Task LoadData()
+    {
+        isLoadingData = true;
+        try
+        {
+            var medicalRecordTask = Http.GetFromJsonAsync<MedicalRecordDto>($"api/doctor/medical-records/{MedicalRecordId}");
+            var medicationsTask = Http.GetFromJsonAsync<List<MedicationDto>>("api/doctor/medications");
+
+            await Task.WhenAll(medicalRecordTask, medicationsTask);
+
+            medicalRecord = await medicalRecordTask;
+            medications = await medicationsTask ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải dữ liệu: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoadingData = false;
+        }
+    }
+
+    private void AddMedication()
+    {
+        model.Details.Add(new CreatePrescriptionDetailDto
+        {
+            MedicationId = Guid.Empty,
+            Quantity = 1,
+            Dosage = string.Empty,
+            Instructions = string.Empty
+        });
+    }
+
+    private void RemoveMedication(int index)
+    {
+        if (model.Details.Count > 1)
+        {
+            model.Details.RemoveAt(index);
+        }
+        else
+        {
+            Snackbar.Add("Đơn thuốc phải có ít nhất 1 loại thuốc", Severity.Warning);
+        }
+    }
+
+    private bool CanSubmit()
+    {
+        return model.Details.Any() && 
+               model.Details.All(d => d.MedicationId != Guid.Empty && 
+                                     d.Quantity > 0 && 
+                                     !string.IsNullOrWhiteSpace(d.Dosage));
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!CanSubmit())
+        {
+            Snackbar.Add("Vui lòng điền đầy đủ thông tin thuốc", Severity.Warning);
+            return;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/doctor/prescriptions", model);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Kê đơn thuốc thành công!", Severity.Success);
+                Navigation.NavigateTo($"/doctor/medical-records/{MedicalRecordId}");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Lỗi: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi kê đơn thuốc: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/doctor/medical-records/{MedicalRecordId}");
+    }
+}

@@ -1,0 +1,55 @@
+<MudNavMenu>
+    <AuthorizeView>
+        <Authorized>
+            <!-- User Menu -->
+            <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="px-4 mt-4 mb-2">Xin chào, @context.User.Identity?.Name</MudText>
+            
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Trang Chủ</MudNavLink>
+            <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Hồ sơ cá nhân</MudNavLink>
+            <MudNavLink Href="/ai-diagnosis" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Psychology">Chuẩn Đoán AI</MudNavLink>
+            <MudNavLink Href="/ai-triage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SmartToy">Hỏi Bác Sĩ AI</MudNavLink>
+            
+            <!-- Patient specific -->
+            <AuthorizeView Roles="Patient" Context="patientCtx">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="px-4 mt-4 mb-2">BỆNH NHÂN</MudText>
+                <MudNavLink Href="/patient/doctors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.MedicalServices">Danh Sách Bác Sĩ</MudNavLink>
+                <MudNavLink Href="/patient/appointments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CalendarMonth">Lịch Hẹn Của Tôi</MudNavLink>
+            </AuthorizeView>
+
+            <!-- Doctor specific -->
+            <AuthorizeView Roles="Doctor" Context="doctorCtx">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="px-4 mt-4 mb-2">BÁC SĨ</MudText>
+                <MudNavLink Href="/doctor/appointments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CalendarMonth">Lịch Hẹn</MudNavLink>
+                <MudNavLink Href="/doctor/medical-records" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Assignment">Bệnh Án</MudNavLink>
+            </AuthorizeView>
+
+            <!-- Staff specific -->
+            <AuthorizeView Roles="Staff" Context="staffCtx">
+                <MudText Typo="Typo.subtitle2" Color="Color.Warning" Class="px-4 mt-4 mb-2">NHÂN VIÊN</MudText>
+                <MudNavLink Href="/staff/appointments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.EventNote">Quản Lý Lịch Hẹn</MudNavLink>
+            </AuthorizeView>
+
+            <!-- Admin specific -->
+            <AuthorizeView Roles="Admin" Context="adminCtx">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="px-4 mt-4 mb-2">QUẢN TRỊ HỆ THỐNG</MudText>
+                
+                <MudNavLink Href="/admin/dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">Tổng Quan</MudNavLink>
+                <MudNavLink Href="/admin/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Group">Quản Lý Người Dùng</MudNavLink>
+                
+                <MudNavGroup Title="Quản Lý Hồ Sơ" Icon="@Icons.Material.Filled.FolderShared" Expanded="false">
+                    <MudNavLink Href="/admin/doctors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.MedicalServices">Hồ Sơ Bác Sĩ</MudNavLink>
+                    <MudNavLink Href="/admin/patients" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PersonSearch">Hồ Sơ Bệnh Nhân</MudNavLink>
+                    <MudNavLink Href="/admin/staffs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Badge">Hồ Sơ Nhân Viên</MudNavLink>
+                </MudNavGroup>
+                
+                <MudNavLink Href="/admin/specialties" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocalHospital">Danh Mục Chuyên Khoa</MudNavLink>
+            </AuthorizeView>
+        </Authorized>
+        <NotAuthorized>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Trang Chủ</MudNavLink>
+            <MudNavLink Href="/ai-diagnosis" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Psychology">Chuẩn Đoán AI</MudNavLink>
+            <MudNavLink Href="/login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Login">Đăng Nhập</MudNavLink>
+            <MudNavLink Href="/register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AppRegistration">Đăng Ký</MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudNavMenu>

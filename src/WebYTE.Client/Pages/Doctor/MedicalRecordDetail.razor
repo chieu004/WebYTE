@@ -1,0 +1,236 @@
+@page "/doctor/medical-records/{RecordId:guid}"
+@using WebYTE.Application.DTOs.MedicalRecord
+@using WebYTE.Application.DTOs.Prescription
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Doctor")]
+
+<PageTitle>Chi Tiết Bệnh Án</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Class="mr-2" />
+        Chi Tiết Bệnh Án
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (medicalRecord == null)
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy bệnh án.</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="3" Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Thông tin bệnh án</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            @if (isEditing)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="SaveChanges">Lưu</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="CancelEdit">Hủy</MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" OnClick="EnableEdit">Chỉnh sửa</MudButton>
+                            }
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (isEditing)
+                        {
+                            <MudTextField @bind-Value="editModel.Diagnosis" Label="Chẩn đoán" Variant="Variant.Outlined" Class="mb-4" />
+                            <MudTextField @bind-Value="editModel.TreatmentPlan" Label="Phương án điều trị" Lines="3" Variant="Variant.Outlined" Class="mb-4" />
+                            <MudTextField @bind-Value="editModel.Notes" Label="Ghi chú" Lines="3" Variant="Variant.Outlined" />
+                        }
+                        else
+                        {
+                            <MudText><strong>Chẩn đoán:</strong> @medicalRecord.Diagnosis</MudText>
+                            <MudText Class="mt-2"><strong>Phương án điều trị:</strong></MudText>
+                            <MudText>@(medicalRecord.TreatmentPlan ?? "Chưa có")</MudText>
+                            <MudText Class="mt-2"><strong>Ghi chú:</strong></MudText>
+                            <MudText>@(medicalRecord.Notes ?? "Không có ghi chú")</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Elevation="3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Đơn thuốc</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            @if (prescription == null)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="CreatePrescription">Kê đơn thuốc</MudButton>
+                            }
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (isLoadingPrescription)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        }
+                        else if (prescription == null)
+                        {
+                            <MudAlert Severity="Severity.Info">Chưa có đơn thuốc.</MudAlert>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(prescription.Notes))
+                            {
+                                <MudText Class="mb-4"><strong>Ghi chú:</strong> @prescription.Notes</MudText>
+                            }
+                            <MudTable Items="@prescription.Details" Elevation="0" Dense="true">
+                                <HeaderContent>
+                                    <MudTh>Thuốc</MudTh>
+                                    <MudTh>Liều lượng</MudTh>
+                                    <MudTh>Số lượng</MudTh>
+                                    <MudTh>Hướng dẫn</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>@context.MedicationName</MudTd>
+                                    <MudTd>@context.Dosage</MudTd>
+                                    <MudTd>@context.Quantity</MudTd>
+                                    <MudTd>@context.Instructions</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Thông tin chung</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText><strong>Bệnh nhân:</strong> @medicalRecord.PatientName</MudText>
+                        <MudText Class="mt-2"><strong>Bác sĩ:</strong> @medicalRecord.DoctorName</MudText>
+                        <MudText Class="mt-2"><strong>Ngày khám:</strong> @medicalRecord.AppointmentDate.ToString("dd/MM/yyyy")</MudText>
+                        <MudText Class="mt-2"><strong>Ngày tạo:</strong> @medicalRecord.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid RecordId { get; set; }
+
+    private MedicalRecordDto? medicalRecord;
+    private PrescriptionDto? prescription;
+    private UpdateMedicalRecordDto editModel = new();
+    private bool isLoading = true;
+    private bool isLoadingPrescription = true;
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMedicalRecord();
+        await LoadPrescription();
+    }
+
+    private async Task LoadMedicalRecord()
+    {
+        isLoading = true;
+        try
+        {
+            medicalRecord = await Http.GetFromJsonAsync<MedicalRecordDto>($"api/doctor/medical-records/{RecordId}");
+            if (medicalRecord != null)
+            {
+                editModel.Diagnosis = medicalRecord.Diagnosis;
+                editModel.TreatmentPlan = medicalRecord.TreatmentPlan;
+                editModel.Notes = medicalRecord.Notes;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải bệnh án: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadPrescription()
+    {
+        isLoadingPrescription = true;
+        try
+        {
+            prescription = await Http.GetFromJsonAsync<PrescriptionDto>($"api/doctor/prescriptions/medical-record/{RecordId}");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // No prescription yet, this is fine
+            prescription = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải đơn thuốc: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoadingPrescription = false;
+        }
+    }
+
+    private void EnableEdit()
+    {
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        if (medicalRecord != null)
+        {
+            editModel.Diagnosis = medicalRecord.Diagnosis;
+            editModel.TreatmentPlan = medicalRecord.TreatmentPlan;
+            editModel.Notes = medicalRecord.Notes;
+        }
+        isEditing = false;
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/doctor/medical-records/{RecordId}", editModel);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Cập nhật bệnh án thành công!", Severity.Success);
+                await LoadMedicalRecord();
+                isEditing = false;
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Lỗi: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi cập nhật bệnh án: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CreatePrescription()
+    {
+        Navigation.NavigateTo($"/doctor/prescriptions/create/{RecordId}");
+    }
+}

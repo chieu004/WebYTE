@@ -1,0 +1,247 @@
+@page "/ai-diagnosis"
+@using WebYTE.Application.DTOs.AI
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Chuẩn Đoán Bệnh Bằng AI</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Psychology" Size="Size.Large" Class="mr-2" />
+        Chuẩn Đoán Bệnh Bằng AI
+    </MudText>
+
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        <strong>Lưu ý:</strong> Đây chỉ là công cụ tham khảo sử dụng AI. Kết quả KHÔNG thay thế chẩn đoán của bác sĩ. 
+        Vui lòng đến gặp bác sĩ để được khám và điều trị chính xác.
+    </MudAlert>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Nhập Thông Tin</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTextField @bind-Value="request.Symptoms" 
+                                  Label="Triệu chứng" 
+                                  Variant="Variant.Outlined" 
+                                  Lines="5"
+                                  Placeholder="Ví dụ: Đau đầu, sốt cao, ho khan..."
+                                  Required="true"
+                                  Class="mb-4" />
+
+                    <MudNumericField @bind-Value="request.Age" 
+                                     Label="Tuổi" 
+                                     Variant="Variant.Outlined" 
+                                     Min="0" 
+                                     Max="150"
+                                     Class="mb-4" />
+
+                    <MudSelect @bind-Value="request.Gender" 
+                               Label="Giới tính" 
+                               Variant="Variant.Outlined"
+                               Class="mb-4">
+                        <MudSelectItem Value="@("Nam")">Nam</MudSelectItem>
+                        <MudSelectItem Value="@("Nữ")">Nữ</MudSelectItem>
+                        <MudSelectItem Value="@("Khác")">Khác</MudSelectItem>
+                    </MudSelect>
+
+                    <MudTextField @bind-Value="request.MedicalHistory" 
+                                  Label="Tiền sử bệnh (tùy chọn)" 
+                                  Variant="Variant.Outlined" 
+                                  Lines="3"
+                                  Placeholder="Ví dụ: Cao huyết áp, đái tháo đường..."
+                                  Class="mb-4" />
+
+                    <MudTextField @bind-Value="request.Allergies" 
+                                  Label="Dị ứng (tùy chọn)" 
+                                  Variant="Variant.Outlined"
+                                  Placeholder="Ví dụ: Penicillin, hải sản..."
+                                  Class="mb-4" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               OnClick="AnalyzeSymptoms"
+                               Disabled="@isAnalyzing"
+                               FullWidth="true">
+                        @if (isAnalyzing)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            <span>Đang phân tích...</span>
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Search" Class="mr-2" />
+                            <span>Phân Tích Triệu Chứng</span>
+                        }
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            @if (result != null)
+            {
+                <MudCard Elevation="3" Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Kết Quả Phân Tích</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudAlert Severity="@GetSeverityColor(result.SeverityLevel)" Class="mb-4">
+                            Mức độ nghiêm trọng: <strong>@GetSeverityText(result.SeverityLevel)</strong>
+                        </MudAlert>
+
+                        <MudText Typo="Typo.h6" Class="mb-3">Các khả năng bệnh lý:</MudText>
+                        @foreach (var condition in result.PossibleConditions)
+                        {
+                            <MudCard Outlined="true" Class="mb-3">
+                                <MudCardContent>
+                                    <div class="d-flex justify-space-between align-center mb-2">
+                                        <MudText Typo="Typo.subtitle1" Color="Color.Primary">
+                                            <strong>@condition.Name</strong>
+                                        </MudText>
+                                        <MudChip T="string" Color="Color.Info" Size="Size.Small">@condition.Probability%</MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Class="mb-2">@condition.Description</MudText>
+                                    
+                                    @if (condition.CommonSymptoms.Any())
+                                    {
+                                        <MudText Typo="Typo.caption" Class="mb-1"><strong>Triệu chứng thường gặp:</strong></MudText>
+                                        <MudChipSet T="string">
+                                            @foreach (var symptom in condition.CommonSymptoms)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@symptom</MudChip>
+                                            }
+                                        </MudChipSet>
+                                    }
+                                    
+                                    <MudText Typo="Typo.body2" Color="Color.Success" Class="mt-2">
+                                        <strong>Khuyến nghị:</strong> @condition.Recommendation
+                                    </MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        }
+
+                        @if (result.RecommendedTests.Any())
+                        {
+                            <MudText Typo="Typo.h6" Class="mb-2 mt-4">Xét nghiệm nên làm:</MudText>
+                            <MudList T="string" Dense="true">
+                                @foreach (var test in result.RecommendedTests)
+                                {
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Science">@test</MudListItem>
+                                }
+                            </MudList>
+                        }
+
+                        @if (result.GeneralAdvice.Any())
+                        {
+                            <MudText Typo="Typo.h6" Class="mb-2 mt-4">Lời khuyên chung:</MudText>
+                            <MudList T="string" Dense="true">
+                                @foreach (var advice in result.GeneralAdvice)
+                                {
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Lightbulb">@advice</MudListItem>
+                                }
+                            </MudList>
+                        }
+
+                        <MudAlert Severity="Severity.Info" Class="mt-4">
+                            @result.Disclaimer
+                        </MudAlert>
+                    </MudCardContent>
+                </MudCard>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private AiDiagnosisRequest request = new() { Age = 30, Gender = "Nam" };
+    private DiagnosisResult? result;
+    private bool isAnalyzing = false;
+    private string errorMessage = string.Empty;
+
+    private async Task AnalyzeSymptoms()
+    {
+        if (string.IsNullOrWhiteSpace(request.Symptoms))
+        {
+            Snackbar.Add("Vui lòng nhập triệu chứng", Severity.Warning);
+            return;
+        }
+
+        isAnalyzing = true;
+        errorMessage = string.Empty;
+        result = null;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/aidiagnosis/diagnose", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var diagnosisResponse = await response.Content.ReadFromJsonAsync<AiDiagnosisResponse>();
+                
+                if (diagnosisResponse != null && diagnosisResponse.IsSuccess)
+                {
+                    result = diagnosisResponse.Result;
+                    Snackbar.Add("Phân tích thành công!", Severity.Success);
+                }
+                else
+                {
+                    errorMessage = diagnosisResponse?.Message ?? "Không thể phân tích";
+                    Snackbar.Add(errorMessage, Severity.Error);
+                }
+            }
+            else
+            {
+                errorMessage = "Lỗi kết nối đến AI service. Vui lòng kiểm tra LM Studio đang chạy.";
+                Snackbar.Add(errorMessage, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi: {ex.Message}";
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+        finally
+        {
+            isAnalyzing = false;
+        }
+    }
+
+    private Severity GetSeverityColor(int level)
+    {
+        return level switch
+        {
+            1 => Severity.Success,
+            2 => Severity.Info,
+            3 => Severity.Normal,
+            4 => Severity.Warning,
+            5 => Severity.Error,
+            _ => Severity.Normal
+        };
+    }
+
+    private string GetSeverityText(int level)
+    {
+        return level switch
+        {
+            1 => "Nhẹ",
+            2 => "Trung bình nhẹ",
+            3 => "Trung bình",
+            4 => "Nghiêm trọng",
+            5 => "Rất nghiêm trọng",
+            _ => "Không xác định"
+        };
+    }
+}

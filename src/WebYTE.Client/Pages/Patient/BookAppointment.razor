@@ -1,0 +1,132 @@
+@page "/patient/book-appointment/{DoctorId:guid}"
+@using WebYTE.Application.DTOs.Patient
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Đặt Lịch Hẹn</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" Class="mr-2" />
+        Đặt Lịch Hẹn
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (doctor != null)
+    {
+        <MudPaper Elevation="3" Class="pa-6 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Thông Tin Bác Sĩ</MudText>
+            <MudText><strong>Họ tên:</strong> @doctor.FullName</MudText>
+            <MudText><strong>Chuyên khoa:</strong> @doctor.SpecialtyName</MudText>
+            <MudText><strong>Phí khám:</strong> @doctor.ConsultationFee.ToString("N0") VNĐ</MudText>
+        </MudPaper>
+
+        <MudPaper Elevation="3" Class="pa-6">
+            <EditForm Model="@bookingDto" OnValidSubmit="HandleBooking">
+                <DataAnnotationsValidator />
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudDatePicker Label="Ngày Hẹn" @bind-Date="appointmentDate" Required="true" 
+                                       MinDate="DateTime.Today" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTimePicker Label="Giờ Hẹn" @bind-Time="appointmentTime" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="Lý Do Khám" @bind-Value="bookingDto.Reason" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="Triệu Chứng" @bind-Value="bookingDto.Symptoms" Lines="4" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                            Đặt Lịch
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GoBack">
+                            Quay Lại
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy thông tin bác sĩ.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid DoctorId { get; set; }
+
+    private DoctorSummaryDto? doctor;
+    private BookAppointmentDto bookingDto = new();
+    private DateTime? appointmentDate;
+    private TimeSpan? appointmentTime;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctor();
+        bookingDto.DoctorId = DoctorId;
+    }
+
+    private async Task LoadDoctor()
+    {
+        isLoading = true;
+        try
+        {
+            var doctors = await Http.GetFromJsonAsync<List<DoctorSummaryDto>>("api/patient/doctors");
+            doctor = doctors?.FirstOrDefault(d => d.DoctorId == DoctorId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải thông tin bác sĩ: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleBooking()
+    {
+        if (appointmentDate == null || appointmentTime == null)
+        {
+            Snackbar.Add("Vui lòng chọn ngày và giờ hẹn", Severity.Warning);
+            return;
+        }
+
+        bookingDto.AppointmentDate = appointmentDate.Value.Date + appointmentTime.Value;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/patient/appointments", bookingDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Đặt lịch hẹn thành công", Severity.Success);
+                Navigation.NavigateTo("/patient/appointments");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Không thể đặt lịch hẹn: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/patient/doctors");
+    }
+}

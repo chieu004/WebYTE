@@ -1,0 +1,149 @@
+@page "/admin/patients/{PatientId:guid}"
+@using WebYTE.Application.DTOs.Patient
+@using WebYTE.Core.Enums
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Chi Tiết Bệnh Nhân</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Class="mr-2" />
+        Chi Tiết Bệnh Nhân
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (patient != null)
+    {
+        <MudPaper Elevation="3" Class="pa-6">
+            <EditForm Model="@updateDto" OnValidSubmit="HandleUpdate">
+                <DataAnnotationsValidator />
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Họ Tên" @bind-Value="updateDto.FullName" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Số Điện Thoại" @bind-Value="updateDto.Phone" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker Label="Ngày Sinh" @bind-Date="dateOfBirth" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="Gender" Label="Giới Tính" @bind-Value="updateDto.Gender">
+                            <MudSelectItem Value="Gender.Male">Nam</MudSelectItem>
+                            <MudSelectItem Value="Gender.Female">Nữ</MudSelectItem>
+                            <MudSelectItem Value="Gender.Other">Khác</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="Địa Chỉ" @bind-Value="updateDto.Address" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Nhóm Máu" @bind-Value="updateDto.BloodType" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Dị Ứng" @bind-Value="updateDto.Allergies" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="Tiền Sử Bệnh" @bind-Value="updateDto.MedicalHistory" Lines="4" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                            Cập Nhật
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GoBack">
+                            Quay Lại
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy thông tin bệnh nhân.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid PatientId { get; set; }
+
+    private PatientProfileDto? patient;
+    private UpdatePatientProfileDto updateDto = new();
+    private DateTime? dateOfBirth;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatient();
+    }
+
+    private async Task LoadPatient()
+    {
+        isLoading = true;
+        try
+        {
+            patient = await Http.GetFromJsonAsync<PatientProfileDto>($"api/admin/patients/{PatientId}");
+            if (patient != null)
+            {
+                dateOfBirth = patient.DateOfBirth;
+                updateDto = new UpdatePatientProfileDto
+                {
+                    FullName = patient.FullName,
+                    Phone = patient.Phone,
+                    DateOfBirth = patient.DateOfBirth,
+                    Gender = patient.Gender,
+                    Address = patient.Address,
+                    BloodType = patient.BloodType,
+                    MedicalHistory = patient.MedicalHistory,
+                    Allergies = patient.Allergies
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải thông tin bệnh nhân: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (dateOfBirth.HasValue)
+        {
+            updateDto.DateOfBirth = dateOfBirth.Value;
+        }
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/admin/patients/{PatientId}", updateDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Cập nhật thông tin bệnh nhân thành công", Severity.Success);
+                Navigation.NavigateTo("/admin/patients");
+            }
+            else
+            {
+                Snackbar.Add("Không thể cập nhật thông tin bệnh nhân", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/patients");
+    }
+}

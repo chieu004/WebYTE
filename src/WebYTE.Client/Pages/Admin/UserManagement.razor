@@ -1,0 +1,110 @@
+@page "/admin/users"
+@using WebYTE.Application.DTOs.Admin
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Quản Lý Người Dùng - Thẩm Quyền Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Error" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Large" Class="mr-2" />
+        Hệ Thống Phân Quyền Bệnh Viện
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Error" Indeterminate="true" />
+    }
+    else if (users == null || users.Count == 0)
+    {
+        <MudAlert Severity="Severity.Warning">Không tải được Data User từ máy chủ.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@users" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="3">
+            <HeaderContent>
+                <MudTh>Email Đăng Nhập</MudTh>
+                <MudTh>Họ và Tên</MudTh>
+                <MudTh>Quyền Hạn (Role)</MudTh>
+                <MudTh>Khóa Tài Khoản</MudTh>
+                <MudTh>Công Cụ Giám Sát</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd>@row.Email</MudTd>
+                <MudTd>@row.FullName</MudTd>
+                <MudTd>
+                    @if (row.Role == "Admin")
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small">ADMIN</MudChip>
+                    }
+                    else if (row.Role == "Doctor")
+                    {
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small">BÁC SĨ</MudChip>
+                    }
+                    else if (row.Role == "Staff")
+                    {
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">NHÂN VIÊN</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">BỆNH NHÂN</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    @if(row.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Bình thường</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Dark" Size="Size.Small">Đã bị cấm (Banned)</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                               OnClick="@(() => ToggleStatus(row.UserId))">
+                        @(row.IsActive ? "Khóa" : "Mở Khóa")
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private List<ManageUserDto>? users;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        try
+        {
+            users = await Http.GetFromJsonAsync<List<ManageUserDto>>("api/admin/users");
+        }
+        catch
+        {
+            Snackbar.Add("Lỗi tải User dữ liệu.", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleStatus(Guid id)
+    {
+        var response = await Http.PutAsync($"api/admin/users/{id}/toggle-status", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Chuyển đổi trạng thái thành công!", Severity.Success);
+            await LoadUsers();
+        }
+    }
+}

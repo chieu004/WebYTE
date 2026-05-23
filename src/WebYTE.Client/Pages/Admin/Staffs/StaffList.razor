@@ -1,0 +1,112 @@
+@page "/admin/staffs"
+@using WebYTE.Application.DTOs.Staff
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+
+<PageTitle>Quản Lý Nhân Viên</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Large" Class="mr-2" />
+        Quản Lý Nhân Viên
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudPaper Elevation="3" Class="pa-4">
+            <MudTable Items="@staffs" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Danh Sách Nhân Viên</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm..." Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Họ Tên</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Số Điện Thoại</MudTh>
+                    <MudTh>Chức Vụ</MudTh>
+                    <MudTh>Phòng Ban</MudTh>
+                    <MudTh>Thao Tác</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Họ Tên">@context.FullName</MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="Số Điện Thoại">@context.Phone</MudTd>
+                    <MudTd DataLabel="Chức Vụ">@context.Position</MudTd>
+                    <MudTd DataLabel="Phòng Ban">@context.Department</MudTd>
+                    <MudTd DataLabel="Thao Tác">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => EditStaff(context.StaffId))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteStaff(context.StaffId))" />
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[]{10, 25, 50, 100}" />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<StaffProfileDto> staffs = new();
+    private bool isLoading = true;
+    private string searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStaffs();
+    }
+
+    private async Task LoadStaffs()
+    {
+        isLoading = true;
+        try
+        {
+            staffs = await Http.GetFromJsonAsync<List<StaffProfileDto>>("api/admin/staffs") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải danh sách nhân viên: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void EditStaff(Guid staffId)
+    {
+        Navigation.NavigateTo($"/admin/staffs/{staffId}");
+    }
+
+    private async Task DeleteStaff(Guid staffId)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/admin/staffs/{staffId}");
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Xóa nhân viên thành công", Severity.Success);
+                await LoadStaffs();
+            }
+            else
+            {
+                Snackbar.Add("Không thể xóa nhân viên", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+    }
+}

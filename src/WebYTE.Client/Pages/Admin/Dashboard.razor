@@ -1,0 +1,124 @@
+@page "/admin/dashboard"
+@using WebYTE.Application.DTOs.Admin
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Tổng Quan Hệ Thống</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Large" Class="mr-2" />
+        Tổng Quan Hệ Thống
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (statistics != null)
+    {
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="3" Class="pa-4">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Tổng Người Dùng</MudText>
+                    <MudText Typo="Typo.h3">@statistics.TotalUsers</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Success">Hoạt động: @statistics.ActiveUsers</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Error">Không hoạt động: @statistics.InactiveUsers</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="3" Class="pa-4">
+                    <MudText Typo="Typo.h6" Color="Color.Info">Bác Sĩ</MudText>
+                    <MudText Typo="Typo.h3">@statistics.TotalDoctors</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Size="Size.Large" Color="Color.Info" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="3" Class="pa-4">
+                    <MudText Typo="Typo.h6" Color="Color.Success">Bệnh Nhân</MudText>
+                    <MudText Typo="Typo.h3">@statistics.TotalPatients</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Color="Color.Success" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="3" Class="pa-4">
+                    <MudText Typo="Typo.h6" Color="Color.Warning">Nhân Viên</MudText>
+                    <MudText Typo="Typo.h3">@statistics.TotalStaff</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Large" Color="Color.Warning" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Elevation="3" Class="pa-4 mt-6">
+            <MudText Typo="Typo.h6" Class="mb-4">Biểu Đồ Phân Bố</MudText>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1">Phân bố theo vai trò</MudText>
+                    <MudList T="string">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.MedicalServices">
+                            Bác sĩ: @statistics.TotalDoctors (@GetPercentage(statistics.TotalDoctors, statistics.TotalUsers)%)
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.PersonSearch">
+                            Bệnh nhân: @statistics.TotalPatients (@GetPercentage(statistics.TotalPatients, statistics.TotalUsers)%)
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Badge">
+                            Nhân viên: @statistics.TotalStaff (@GetPercentage(statistics.TotalStaff, statistics.TotalUsers)%)
+                        </MudListItem>
+                    </MudList>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1">Trạng thái hoạt động</MudText>
+                    <MudList T="string">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                            Đang hoạt động: @statistics.ActiveUsers (@GetPercentage(statistics.ActiveUsers, statistics.TotalUsers)%)
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                            Không hoạt động: @statistics.InactiveUsers (@GetPercentage(statistics.InactiveUsers, statistics.TotalUsers)%)
+                        </MudListItem>
+                    </MudList>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Không thể tải thống kê hệ thống.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    private UserStatisticsDto? statistics;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatistics();
+    }
+
+    private async Task LoadStatistics()
+    {
+        isLoading = true;
+        try
+        {
+            statistics = await Http.GetFromJsonAsync<UserStatisticsDto>("api/admin/statistics");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải thống kê: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetPercentage(int value, int total)
+    {
+        if (total == 0) return "0";
+        return ((double)value / total * 100).ToString("F1");
+    }
+}

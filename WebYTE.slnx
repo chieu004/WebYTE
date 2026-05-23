@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WebYTE.API/WebYTE.API.csproj" />
+    <Project Path="src/WebYTE.Application/WebYTE.Application.csproj" />
+    <Project Path="src/WebYTE.Client/WebYTE.Client.csproj" />
+    <Project Path="src/WebYTE.Core/WebYTE.Core.csproj" />
+    <Project Path="src/WebYTE.Infrastructure/WebYTE.Infrastructure.csproj" />
+  </Folder>
+</Solution>

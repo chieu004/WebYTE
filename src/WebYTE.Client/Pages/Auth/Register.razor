@@ -1,0 +1,102 @@
+@page "/register"
+@using WebYTE.Application.DTOs.Auth
+@using WebYTE.Core.Enums
+@inject WebYTE.Client.Services.IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Đăng ký - WebYTE</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8 mb-16">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Secondary">Tạo Tài Khoản Mới</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm @ref="form" @bind-IsValid="@success">
+                <MudTextField T="string" Label="Họ và Tên" @bind-Value="registerRequest.FullName" 
+                              Required="true" Class="mb-3"/>
+                
+                <MudTextField T="string" Label="Số Điện Thoại" @bind-Value="registerRequest.Phone" 
+                              Required="true" Class="mb-3"/>
+                
+                <MudDatePicker Label="Ngày Sinh" @bind-Date="selectedDateOfBirth" Class="mb-3" />
+
+                <MudSelect T="Gender" Label="Giới Tính" @bind-Value="registerRequest.Gender" Class="mb-3">
+                    <MudSelectItem Value="@(Gender.Male)">Nam</MudSelectItem>
+                    <MudSelectItem Value="@(Gender.Female)">Nữ</MudSelectItem>
+                    <MudSelectItem Value="@(Gender.Other)">Khác</MudSelectItem>
+                </MudSelect>
+
+                <MudTextField T="string" Label="Email" @bind-Value="registerRequest.Email" 
+                              Required="true" InputType="InputType.Email" Class="mb-3"/>
+                
+                <MudTextField T="string" Label="Mật khẩu (Tối thiểu 6 ký tự)" @bind-Value="registerRequest.Password"
+                              Required="true" InputType="InputType.Password" Class="mb-3"/>
+                              
+                <MudSelect T="RoleType" Label="Bạn là ai?" @bind-Value="registerRequest.Role" Class="mb-6">
+                    <MudSelectItem Value="@(RoleType.Patient)">Bệnh Nhân</MudSelectItem>
+                    <MudSelectItem Value="@(RoleType.Doctor)">Bác Sĩ</MudSelectItem>
+                </MudSelect>
+
+                @if(!string.IsNullOrEmpty(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" Size="Size.Large"
+                           Disabled="@(!success || isLoading)" OnClick="HandleRegister">
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    }
+                    else
+                    {
+                        <MudText>Hoàn Tất Đăng Ký</MudText>
+                    }
+                </MudButton>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    MudForm form = new MudForm();
+    bool success;
+    bool isLoading;
+    string errorMessage = string.Empty;
+    DateTime? selectedDateOfBirth;
+
+    private RegisterRequest registerRequest = new RegisterRequest() { Role = RoleType.Patient, Gender = Gender.Male };
+
+    private async Task HandleRegister()
+    {
+        if (selectedDateOfBirth.HasValue)
+        {
+            registerRequest.DateOfBirth = selectedDateOfBirth.Value;
+        }
+
+        await form.ValidateAsync();
+        if(form.IsValid)
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var response = await AuthService.RegisterAsync(registerRequest);
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add("Đăng ký thành công! Vui lòng đăng nhập.", Severity.Success);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Đã có lỗi xảy ra.";
+            }
+
+            isLoading = false;
+        }
+    }
+}

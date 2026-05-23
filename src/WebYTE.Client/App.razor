@@ -1,0 +1,29 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <p role="alert">Vui lòng đăng nhập để truy cập chức năng này.</p>
+                    }
+                    else
+                    {
+                        <p role="alert">Bạn không có quyền (Role) để truy cập nội dung này!</p>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+             <LayoutView Layout="@typeof(MainLayout)">
+                 <MudText Typo="Typo.h4" Align="Align.Center" Class="mt-16">KHÔNG TÌM THẤY TRANG</MudText>
+                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" Class="mt-4">Quay về trang chủ</MudButton>
+             </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />

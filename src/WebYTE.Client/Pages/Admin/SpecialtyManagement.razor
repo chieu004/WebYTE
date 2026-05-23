@@ -1,0 +1,98 @@
+@page "/admin/specialties"
+@using WebYTE.Application.DTOs.Admin
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Quản Lý Chuyên Khoa</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.LocalHospital" Size="Size.Large" Class="mr-2" />
+        Danh Mục Chuyên Khoa Xét Nghiệm
+    </MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="3" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-4">Tạo Mới Khoa</MudText>
+                    <MudTextField T="string" Label="Tên Chuyên Khoa" @bind-Value="newSpec.Name" Required="true" Class="mb-4" />
+                    <MudTextField T="string" Label="Mô tả chức năng" @bind-Value="newSpec.Description" Lines="3" Class="mb-4" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="AddSpecialty" Disabled="isCreating">
+                        Xác Nhận Tạo
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            @if (isLoading)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            }
+            else
+            {
+                <MudTable Items="@specs" Hover="true" Elevation="3">
+                    <HeaderContent>
+                        <MudTh>ID Cấp Phát</MudTh>
+                        <MudTh>Tên Chuyên Khoa</MudTh>
+                        <MudTh>Mô Tả Lâm Sàng</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="row">
+                        <MudTd>... @row.Id.ToString().Substring(0, 8)</MudTd>
+                        <MudTd><MudText Color="Color.Primary" Class="font-weight-bold">@row.Name</MudText></MudTd>
+                        <MudTd>@row.Description</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<SpecialtyDto> specs = new List<SpecialtyDto>();
+    private bool isLoading = true;
+    private bool isCreating = false;
+
+    private SpecialtyDto newSpec = new SpecialtyDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSpecs();
+    }
+
+    private async Task LoadSpecs()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await Http.GetFromJsonAsync<List<SpecialtyDto>>("api/admin/specialties");
+            if (result != null) specs = result;
+        }
+        catch
+        {
+            Snackbar.Add("Không tải được danh mục chuyên khoa.", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AddSpecialty()
+    {
+        if (string.IsNullOrWhiteSpace(newSpec.Name)) return;
+
+        isCreating = true;
+        var response = await Http.PostAsJsonAsync("api/admin/specialties", newSpec);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Đã tạo mới 1 chuyên khoa thành công!", Severity.Success);
+            newSpec = new SpecialtyDto(); // reset forms
+            await LoadSpecs();
+        }
+        isCreating = false;
+    }
+}

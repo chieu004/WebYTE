@@ -1,0 +1,47 @@
+@page "/"
+
+<PageTitle>WebYTE - Phòng Khám Trực Tuyến</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudGrid>
+        <MudItem xs="12" md="6" Class="d-flex align-center">
+            <div>
+                <MudText Typo="Typo.h2" Color="Color.Primary" Class="mb-4">Chăm Sóc Sức Khỏe <br /> Thế Hệ Mới</MudText>
+                <MudText Typo="Typo.h5" Class="mb-6 text-muted">Đặt lịch khám nhanh chóng. Theo dõi tiến trình với Bác sĩ. Trợ lý AI sẵn sàng 24/7 bảo vệ gia đình bạn.</MudText>
+                
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Href="/login" Class="mr-4 px-8 py-3">Bắt Đầu Ngay</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Large" Href="/ai-triage" Class="px-8 py-3">Hỏi AI Triage</MudButton>
+            </div>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudImage Src="images/doctor.png" 
+                      Alt="Bác sĩ chuyên khoa" Elevation="25" Class="rounded-xl mud-width-full" 
+                      ObjectFit="ObjectFit.Cover" Height="450" Style="transition: transform 0.3s ease; cursor: pointer;" 
+                      onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" />
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Class="mt-16">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h5" Class="mt-4 mb-2">Đặt Lịch Dễ Dàng</MudText>
+                <MudText>Lịch trình được cập nhật theo thời gian thực.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Color="Color.Secondary" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h5" Class="mt-4 mb-2">Trợ Lý AI LM Studio</MudText>
+                <MudText>Chẩn đoán phân bua sơ bộ 24/7 hoàn toàn bảo mật ngay tại máy nội bộ.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Success" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h5" Class="mt-4 mb-2">Bảo Mật Bệnh Án</MudText>
+                <MudText>Công nghệ JWT chống giả mạo quyền của bệnh nhân.</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

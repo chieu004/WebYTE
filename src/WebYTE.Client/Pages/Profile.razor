@@ -1,0 +1,166 @@
+@page "/profile"
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Hồ Sơ Cá Nhân</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Color="Color.Primary">Cập Nhật Hồ Sơ (@userRole)</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            @if(isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else
+            {
+                <MudTextField @bind-Value="fullName" Label="Họ và Tên" Required="true" Class="mb-3"/>
+                <MudTextField @bind-Value="phone" Label="Số Điện Thoại" Class="mb-3"/>
+                
+                @if (userRole == "Patient")
+                {
+                    <MudTextField @bind-Value="bloodType" Label="Nhóm Máu" Class="mb-3"/>
+                    <MudTextField @bind-Value="medicalHistory" Label="Tiền Sử Bệnh An" Lines="3" Class="mb-3"/>
+                    <MudTextField @bind-Value="allergies" Label="Dị Ứng" Lines="2" Class="mb-3"/>
+                }
+                else if (userRole == "Doctor")
+                {
+                    <MudTextField @bind-Value="qualifications" Label="Bằng Cấp" Class="mb-3"/>
+                    <MudTextField @bind-Value="experience" Label="Kinh Nghiệm" Class="mb-3"/>
+                    <MudTextField @bind-Value="bio" Label="Tiểu Sử Bác Sĩ" Lines="3" Class="mb-3"/>
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProfile" FullWidth="true" Class="mt-4">
+                    Lưu Thay Đổi
+                </MudButton>
+            }
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private bool isLoading = true;
+    private string userRole = "";
+    
+    // Form fields
+    private string fullName = "";
+    private string phone = "";
+    
+    // Patient
+    private string bloodType = "";
+    private string medicalHistory = "";
+    private string allergies = "";
+
+    // Doctor
+    private string qualifications = "";
+    private string experience = "";
+    private string bio = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            userRole = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "";
+            await LoadProfileData();
+        }
+    }
+
+    private async Task LoadProfileData()
+    {
+        isLoading = true;
+        try
+        {
+            if (userRole == "Patient")
+            {
+                var profile = await Http.GetFromJsonAsync<WebYTE.Application.DTOs.Patient.PatientProfileDto>("api/patient/profile");
+                if (profile != null)
+                {
+                    fullName = profile.FullName;
+                    phone = profile.Phone ?? "";
+                    bloodType = profile.BloodType ?? "";
+                    medicalHistory = profile.MedicalHistory ?? "";
+                    allergies = profile.Allergies ?? "";
+                }
+            }
+            else if (userRole == "Doctor")
+            {
+                var profile = await Http.GetFromJsonAsync<WebYTE.Application.DTOs.Doctor.DoctorProfileDto>("api/doctor/profile");
+                if (profile != null)
+                {
+                    fullName = profile.FullName;
+                    phone = profile.Phone ?? "";
+                    qualifications = profile.Qualifications ?? "";
+                    experience = profile.Experience ?? "";
+                    bio = profile.Bio ?? "";
+                }
+            }
+            else if (userRole == "Staff")
+            {
+                var profile = await Http.GetFromJsonAsync<WebYTE.Application.DTOs.Staff.StaffProfileDto>("api/staff/profile");
+                if (profile != null)
+                {
+                    fullName = profile.FullName;
+                    phone = profile.Phone ?? "";
+                }
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Không thể tải hồ sơ lúc này.", Severity.Warning);
+        }
+        isLoading = false;
+    }
+
+    private async Task SaveProfile()
+    {
+        bool success = false;
+        try
+        {
+            if (userRole == "Patient")
+            {
+                var req = new WebYTE.Application.DTOs.Patient.UpdatePatientProfileDto
+                {
+                    FullName = fullName, Phone = phone, BloodType = bloodType, MedicalHistory = medicalHistory, Allergies = allergies
+                };
+                var res = await Http.PutAsJsonAsync("api/patient/profile", req);
+                success = res.IsSuccessStatusCode;
+            }
+            else if (userRole == "Doctor")
+            {
+                var req = new WebYTE.Application.DTOs.Doctor.UpdateDoctorProfileDto
+                {
+                    FullName = fullName, Phone = phone, Qualifications = qualifications, Experience = experience, Bio = bio
+                };
+                var res = await Http.PutAsJsonAsync("api/doctor/profile", req);
+                success = res.IsSuccessStatusCode;
+            }
+            else if (userRole == "Staff")
+            {
+                var req = new WebYTE.Application.DTOs.Staff.UpdateStaffProfileDto
+                {
+                    FullName = fullName, Phone = phone
+                };
+                var res = await Http.PutAsJsonAsync("api/staff/profile", req);
+                success = res.IsSuccessStatusCode;
+            }
+
+            if (success) Snackbar.Add("Đã cập nhật hồ sơ!", Severity.Success);
+            else Snackbar.Add("Cập nhật thất bại.", Severity.Error);
+        }
+        catch
+        {
+            Snackbar.Add("Ngoại lệ khi lưu hồ sơ.", Severity.Error);
+        }
+    }
+}

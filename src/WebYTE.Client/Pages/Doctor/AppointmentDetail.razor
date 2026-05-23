@@ -1,0 +1,214 @@
+@page "/doctor/appointments/{AppointmentId:guid}"
+@using WebYTE.Application.DTOs.Appointment
+@using WebYTE.Core.Enums
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Chi Tiết Lịch Hẹn</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" Class="mr-2" />
+        Chi Tiết Lịch Hẹn
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (appointment != null)
+    {
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudPaper Elevation="3" Class="pa-6 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-4">Thông Tin Lịch Hẹn</MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Bệnh Nhân</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@appointment.PatientName</MudText>
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Ngày Giờ</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">
+                                @appointment.AppointmentDate.ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Trạng Thái</MudText>
+                            <MudChip T="string" Color="@GetStatusColor(appointment.Status)" Size="Size.Small">
+                                @GetStatusText(appointment.Status)
+                            </MudChip>
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Thanh Toán</MudText>
+                            <MudChip T="string" Color="@GetPaymentColor(appointment.PaymentStatus)" Size="Size.Small">
+                                @GetPaymentText(appointment.PaymentStatus)
+                            </MudChip>
+                        </MudItem>
+                        
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Lý Do Khám</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@appointment.Reason</MudText>
+                        </MudItem>
+                        
+                        @if (!string.IsNullOrEmpty(appointment.Symptoms))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">Triệu Chứng</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-3">@appointment.Symptoms</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudPaper>
+
+                @if (appointment.Status == AppointmentStatus.Confirmed)
+                {
+                    <MudPaper Elevation="3" Class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-4">Thao Tác</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                   OnClick="@(() => CreateMedicalRecord())">
+                            Tạo Bệnh Án
+                        </MudButton>
+                    </MudPaper>
+                }
+                else if (appointment.Status == AppointmentStatus.Completed)
+                {
+                    <MudAlert Severity="Severity.Success">
+                        Lịch hẹn đã hoàn thành. Bệnh án đã được tạo.
+                    </MudAlert>
+                }
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="3" Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-4">Thông Tin Chung</MudText>
+                    
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Person">
+                            <MudText Typo="Typo.body2">Bệnh nhân: @appointment.PatientName</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.CalendarToday">
+                            <MudText Typo="Typo.body2">
+                                @appointment.AppointmentDate.ToString("dddd, dd/MM/yyyy")
+                            </MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.AccessTime">
+                            <MudText Typo="Typo.body2">
+                                @appointment.AppointmentDate.ToString("HH:mm")
+                            </MudText>
+                        </MudListItem>
+                    </MudList>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" 
+                               FullWidth="true" OnClick="GoBack">
+                        Quay Lại
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy thông tin lịch hẹn.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid AppointmentId { get; set; }
+
+    private AppointmentDto? appointment;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointment();
+    }
+
+    private async Task LoadAppointment()
+    {
+        isLoading = true;
+        try
+        {
+            appointment = await Http.GetFromJsonAsync<AppointmentDto>($"api/doctor/appointments/{AppointmentId}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải thông tin lịch hẹn: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CreateMedicalRecord()
+    {
+        Navigation.NavigateTo($"/doctor/medical-records/create/{AppointmentId}");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/doctor/appointments");
+    }
+
+    private Color GetStatusColor(AppointmentStatus status)
+    {
+        return status switch
+        {
+            AppointmentStatus.Pending => Color.Warning,
+            AppointmentStatus.Confirmed => Color.Info,
+            AppointmentStatus.Completed => Color.Success,
+            AppointmentStatus.Cancelled => Color.Error,
+            AppointmentStatus.NoShow => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private string GetStatusText(AppointmentStatus status)
+    {
+        return status switch
+        {
+            AppointmentStatus.Pending => "Chờ xác nhận",
+            AppointmentStatus.Confirmed => "Đã xác nhận",
+            AppointmentStatus.Completed => "Hoàn thành",
+            AppointmentStatus.Cancelled => "Đã hủy",
+            AppointmentStatus.NoShow => "Không đến",
+            _ => "Không xác định"
+        };
+    }
+
+    private Color GetPaymentColor(PaymentStatus paymentStatus)
+    {
+        return paymentStatus switch
+        {
+            PaymentStatus.Unpaid => Color.Error,
+            PaymentStatus.Pending => Color.Warning,
+            PaymentStatus.Paid => Color.Success,
+            PaymentStatus.Failed => Color.Error,
+            PaymentStatus.Refunded => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private string GetPaymentText(PaymentStatus paymentStatus)
+    {
+        return paymentStatus switch
+        {
+            PaymentStatus.Unpaid => "Chưa thanh toán",
+            PaymentStatus.Pending => "Chờ thanh toán",
+            PaymentStatus.Paid => "Đã thanh toán",
+            PaymentStatus.Failed => "Thất bại",
+            PaymentStatus.Refunded => "Đã hoàn tiền",
+            _ => "Không xác định"
+        };
+    }
+}

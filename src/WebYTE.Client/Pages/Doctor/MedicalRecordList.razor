@@ -1,0 +1,90 @@
+@page "/doctor/medical-records"
+@using WebYTE.Application.DTOs.MedicalRecord
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Doctor")]
+
+<PageTitle>Quản Lý Bệnh Án</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Class="mr-2" />
+        Quản Lý Bệnh Án
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (medicalRecords == null || !medicalRecords.Any())
+    {
+        <MudAlert Severity="Severity.Info">Chưa có bệnh án nào.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@medicalRecords" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="2">
+            <HeaderContent>
+                <MudTh>Ngày tạo</MudTh>
+                <MudTh>Bệnh nhân</MudTh>
+                <MudTh>Chẩn đoán</MudTh>
+                <MudTh>Ngày khám</MudTh>
+                <MudTh>Đơn thuốc</MudTh>
+                <MudTh>Thao tác</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Ngày tạo">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Bệnh nhân">@context.PatientName</MudTd>
+                <MudTd DataLabel="Chẩn đoán">@context.Diagnosis</MudTd>
+                <MudTd DataLabel="Ngày khám">@context.AppointmentDate.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Đơn thuốc">
+                    @if (context.HasPrescription)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Đã kê đơn</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Chưa kê đơn</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                               OnClick="@(() => ViewDetail(context.Id))">Chi tiết</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private List<MedicalRecordDto>? medicalRecords;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMedicalRecords();
+    }
+
+    private async Task LoadMedicalRecords()
+    {
+        isLoading = true;
+        try
+        {
+            medicalRecords = await Http.GetFromJsonAsync<List<MedicalRecordDto>>("api/doctor/medical-records");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải bệnh án: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ViewDetail(Guid recordId)
+    {
+        Navigation.NavigateTo($"/doctor/medical-records/{recordId}");
+    }
+}

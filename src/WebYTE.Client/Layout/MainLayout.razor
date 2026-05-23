@@ -1,0 +1,47 @@
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject WebYTE.Client.Services.IAuthService AuthService
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudIcon Icon="@Icons.Material.Filled.LocalHospital" Size="Size.Large" Class="mr-2" />
+        <MudText Typo="Typo.h5" Class="ml-3 font-weight-bold">Phòng Khám WebYTE</MudText>
+        <MudSpacer />
+        
+        <AuthorizeView>
+            <Authorized>
+                <NotificationBell />
+                <MudButton EndIcon="@Icons.Material.Filled.Logout" Color="Color.Error" Variant="Variant.Filled" OnClick="Logout" Class="ml-2">Đăng Xuất</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton EndIcon="@Icons.Material.Filled.Login" Color="Color.Inherit" Variant="Variant.Text" Href="/login">Đăng Nhập</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Variant="@DrawerVariant.Responsive">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pt-8 pb-8">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}

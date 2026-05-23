@@ -1,0 +1,121 @@
+@page "/admin/staffs/{StaffId:guid}"
+@using WebYTE.Application.DTOs.Staff
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Chi Tiết Nhân Viên</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Large" Class="mr-2" />
+        Chi Tiết Nhân Viên
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (staff != null)
+    {
+        <MudPaper Elevation="3" Class="pa-6">
+            <EditForm Model="@updateDto" OnValidSubmit="HandleUpdate">
+                <DataAnnotationsValidator />
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Họ Tên" @bind-Value="updateDto.FullName" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Số Điện Thoại" @bind-Value="updateDto.Phone" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Chức Vụ" @bind-Value="updateDto.Position" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Phòng Ban" @bind-Value="updateDto.Department" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                            Cập Nhật
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GoBack">
+                            Quay Lại
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy thông tin nhân viên.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid StaffId { get; set; }
+
+    private StaffProfileDto? staff;
+    private UpdateStaffProfileDto updateDto = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStaff();
+    }
+
+    private async Task LoadStaff()
+    {
+        isLoading = true;
+        try
+        {
+            staff = await Http.GetFromJsonAsync<StaffProfileDto>($"api/admin/staffs/{StaffId}");
+            if (staff != null)
+            {
+                updateDto = new UpdateStaffProfileDto
+                {
+                    FullName = staff.FullName,
+                    Phone = staff.Phone,
+                    Position = staff.Position,
+                    Department = staff.Department
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải thông tin nhân viên: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/admin/staffs/{StaffId}", updateDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Cập nhật thông tin nhân viên thành công", Severity.Success);
+                Navigation.NavigateTo("/admin/staffs");
+            }
+            else
+            {
+                Snackbar.Add("Không thể cập nhật thông tin nhân viên", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/staffs");
+    }
+}

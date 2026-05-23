@@ -1,0 +1,82 @@
+@page "/login"
+@using WebYTE.Application.DTOs.Auth
+@inject WebYTE.Client.Services.IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Đăng nhập - WebYTE</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary">Đăng Nhập</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm @ref="form" @bind-IsValid="@success">
+                <MudTextField T="string" Label="Email" @bind-Value="loginRequest.Email" 
+                              Required="true" RequiredError="Hãy nhập Email."
+                              InputType="InputType.Email" Class="mb-4"/>
+                
+                <MudTextField T="string" Label="Mật khẩu" @bind-Value="loginRequest.Password"
+                              Required="true" RequiredError="Hãy nhập Mật khẩu." 
+                              InputType="InputType.Password" Class="mb-6"/>
+
+                @if(!string.IsNullOrEmpty(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large"
+                           Disabled="@(!success || isLoading)" OnClick="HandleLogin">
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">Đang xử lý</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Đăng Nhập Quản Lý</MudText>
+                    }
+                </MudButton>
+            </MudForm>
+        </MudCardContent>
+        <MudCardActions Class="justify-center">
+            <MudText>Chưa có tài khoản? <MudLink Href="/register">Đăng ký ngay</MudLink></MudText>
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
+
+@code {
+    MudForm form = new MudForm();
+    bool success;
+    bool isLoading;
+    string errorMessage = string.Empty;
+
+    private LoginRequest loginRequest = new LoginRequest();
+
+    private async Task HandleLogin()
+    {
+        await form.ValidateAsync();
+        if(form.IsValid)
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var response = await AuthService.LoginAsync(loginRequest);
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add("Đăng nhập thành công!", Severity.Success);
+                NavigationManager.NavigateTo("/", forceLoad: false); // SPA navigation, role đã được parse ngay lập tức
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Đăng nhập thất bại. Vui lòng kiểm tra lại.";
+            }
+
+            isLoading = false;
+        }
+    }
+}

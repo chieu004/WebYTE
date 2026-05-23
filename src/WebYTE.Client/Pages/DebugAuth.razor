@@ -1,0 +1,155 @@
+@page "/debug-auth"
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Debug Authentication</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Debug Authentication</MudText>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">1. LocalStorage Token</MudText>
+        <MudButton OnClick="CheckToken" Variant="Variant.Filled" Color="Color.Primary">Check Token</MudButton>
+        @if (!string.IsNullOrEmpty(tokenInfo))
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-2">@tokenInfo</MudAlert>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">2. Authentication State</MudText>
+        <MudButton OnClick="CheckAuthState" Variant="Variant.Filled" Color="Color.Primary">Check Auth State</MudButton>
+        @if (!string.IsNullOrEmpty(authStateInfo))
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-2">
+                <pre>@authStateInfo</pre>
+            </MudAlert>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">3. Test API Call</MudText>
+        <MudButton OnClick="TestApiCall" Variant="Variant.Filled" Color="Color.Primary">Test /api/admin/users</MudButton>
+        @if (!string.IsNullOrEmpty(apiResult))
+        {
+            <MudAlert Severity="@apiSeverity" Class="mt-2">
+                <pre>@apiResult</pre>
+            </MudAlert>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">4. Clear Token & Reload</MudText>
+        <MudButton OnClick="ClearAndReload" Variant="Variant.Filled" Color="Color.Error">Clear Token & Reload</MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string? tokenInfo;
+    private string? authStateInfo;
+    private string? apiResult;
+    private Severity apiSeverity = Severity.Info;
+
+    private async Task CheckToken()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            
+            if (string.IsNullOrEmpty(token))
+            {
+                tokenInfo = "❌ No token found in localStorage";
+            }
+            else
+            {
+                tokenInfo = $"✅ Token found!\n\nLength: {token.Length} characters\n\nFirst 50 chars: {token.Substring(0, Math.Min(50, token.Length))}...";
+                
+                // Decode token
+                try
+                {
+                    var parts = token.Split('.');
+                    if (parts.Length >= 2)
+                    {
+                        var payload = parts[1];
+                        var jsonBytes = ParseBase64WithoutPadding(payload);
+                        var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
+                        tokenInfo += $"\n\nPayload:\n{json}";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    tokenInfo += $"\n\n⚠️ Cannot decode: {ex.Message}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            tokenInfo = $"❌ Error: {ex.Message}";
+        }
+    }
+
+    private async Task CheckAuthState()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            
+            authStateInfo = $"IsAuthenticated: {user.Identity?.IsAuthenticated}\n";
+            authStateInfo += $"Name: {user.Identity?.Name}\n";
+            authStateInfo += $"AuthenticationType: {user.Identity?.AuthenticationType}\n\n";
+            authStateInfo += "Claims:\n";
+            
+            foreach (var claim in user.Claims)
+            {
+                authStateInfo += $"  {claim.Type}: {claim.Value}\n";
+            }
+        }
+        catch (Exception ex)
+        {
+            authStateInfo = $"❌ Error: {ex.Message}";
+        }
+    }
+
+    private async Task TestApiCall()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/admin/users");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                apiResult = $"✅ Success! Status: {response.StatusCode}\n\nResponse:\n{content.Substring(0, Math.Min(500, content.Length))}...";
+                apiSeverity = Severity.Success;
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                apiResult = $"❌ Failed! Status: {response.StatusCode}\n\nResponse:\n{content}";
+                apiSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            apiResult = $"❌ Exception: {ex.Message}\n\nStack:\n{ex.StackTrace}";
+            apiSeverity = Severity.Error;
+        }
+    }
+
+    private async Task ClearAndReload()
+    {
+        await JS.InvokeVoidAsync("localStorage.clear");
+        await JS.InvokeVoidAsync("location.reload");
+    }
+
+    private static byte[] ParseBase64WithoutPadding(string base64)
+    {
+        base64 = base64.Replace('-', '+').Replace('_', '/');
+        int mod = base64.Length % 4;
+        if (mod == 2) base64 += "==";
+        else if (mod == 3) base64 += "=";
+        return Convert.FromBase64String(base64);
+    }
+}

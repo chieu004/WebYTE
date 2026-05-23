@@ -1,0 +1,166 @@
+@page "/doctor/medical-records/create/{AppointmentId:guid}"
+@using WebYTE.Application.DTOs.MedicalRecord
+@using WebYTE.Application.DTOs.Appointment
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Doctor")]
+
+<PageTitle>Tạo Bệnh Án</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.NoteAdd" Size="Size.Large" Class="mr-2" />
+        Tạo Bệnh Án
+    </MudText>
+
+    @if (isLoadingAppointment)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (appointment == null)
+    {
+        <MudAlert Severity="Severity.Error">Không tìm thấy lịch hẹn.</MudAlert>
+    }
+    else
+    {
+        <MudCard Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Thông tin lịch hẹn</MudText>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudText><strong>Bệnh nhân:</strong> @appointment.PatientName</MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudText><strong>Ngày khám:</strong> @appointment.AppointmentDate.ToString("dd/MM/yyyy HH:mm")</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText><strong>Lý do khám:</strong> @appointment.Reason</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText><strong>Triệu chứng:</strong> @appointment.Symptoms</MudText>
+                    </MudItem>
+                </MudGrid>
+
+                <MudDivider Class="my-6" />
+
+                <MudText Typo="Typo.h6" Class="mb-4">Thông tin bệnh án</MudText>
+                <MudForm @ref="form" @bind-IsValid="@isValid">
+                    <MudTextField @bind-Value="model.Diagnosis" 
+                                  Label="Chẩn đoán" 
+                                  Required="true"
+                                  RequiredError="Vui lòng nhập chẩn đoán"
+                                  Variant="Variant.Outlined" 
+                                  Class="mb-4" />
+
+                    <MudTextField @bind-Value="model.TreatmentPlan" 
+                                  Label="Phương án điều trị" 
+                                  Lines="3"
+                                  Variant="Variant.Outlined" 
+                                  Class="mb-4" />
+
+                    <MudTextField @bind-Value="model.Notes" 
+                                  Label="Ghi chú" 
+                                  Lines="3"
+                                  Variant="Variant.Outlined" 
+                                  Class="mb-4" />
+                </MudForm>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           Disabled="@(!isValid || isSubmitting)"
+                           OnClick="HandleSubmit">
+                    @if (isSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ml-2">Đang lưu...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Tạo Bệnh Án</MudText>
+                    }
+                </MudButton>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default" 
+                           OnClick="Cancel">Hủy</MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid AppointmentId { get; set; }
+
+    private AppointmentDto? appointment;
+    private CreateMedicalRecordDto model = new();
+    private MudForm? form;
+    private bool isValid;
+    private bool isLoadingAppointment = true;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointment();
+        model.AppointmentId = AppointmentId;
+    }
+
+    private async Task LoadAppointment()
+    {
+        isLoadingAppointment = true;
+        try
+        {
+            appointment = await Http.GetFromJsonAsync<AppointmentDto>($"api/doctor/appointments/{AppointmentId}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải lịch hẹn: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoadingAppointment = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (form != null)
+        {
+            await form.ValidateAsync();
+            if (!isValid) return;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/doctor/medical-records", model);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var createdRecord = await response.Content.ReadFromJsonAsync<MedicalRecordDto>();
+                Snackbar.Add("Tạo bệnh án thành công!", Severity.Success);
+                Navigation.NavigateTo($"/doctor/medical-records/{createdRecord?.Id}");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Lỗi: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tạo bệnh án: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/doctor/appointments");
+    }
+}

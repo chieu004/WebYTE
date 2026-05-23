@@ -1,0 +1,101 @@
+@page "/patient/doctors"
+@using WebYTE.Application.DTOs.Patient
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Danh Sách Bác Sĩ</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Size="Size.Large" Class="mr-2" />
+        Danh Sách Bác Sĩ
+    </MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var doctor in doctors)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="3">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                    @doctor.FullName.Substring(0, 1)
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@doctor.FullName</MudText>
+                                <MudText Typo="Typo.body2">@doctor.SpecialtyName</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+                                @doctor.Qualifications
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" />
+                                Kinh nghiệm: @doctor.Experience
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Small" />
+                                Phí khám: @doctor.ConsultationFee.ToString("N0") VNĐ
+                            </MudText>
+                            @if (!string.IsNullOrEmpty(doctor.Bio))
+                            {
+                                <MudText Typo="Typo.body2" Class="mt-3">
+                                    @doctor.Bio
+                                </MudText>
+                            }
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       OnClick="@(() => BookAppointment(doctor.DoctorId))">
+                                Đặt Lịch Hẹn
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<DoctorSummaryDto> doctors = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctors();
+    }
+
+    private async Task LoadDoctors()
+    {
+        isLoading = true;
+        try
+        {
+            doctors = await Http.GetFromJsonAsync<List<DoctorSummaryDto>>("api/patient/doctors") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi tải danh sách bác sĩ: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void BookAppointment(Guid doctorId)
+    {
+        Navigation.NavigateTo($"/patient/book-appointment/{doctorId}");
+    }
+}

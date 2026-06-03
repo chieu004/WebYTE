@@ -1,0 +1,428 @@
+﻿{
+  "version": "2026.1.0",
+  "lastUpdated": "2026-05-31",
+  "source": "Bộ Y Tế Việt Nam - Hướng dẫn Chẩn đoán Điều trị Cập nhật & Tiêu chuẩn Y tế Kỹ thuật số 2026",
+  "generalRules": [
+    "Không được chẩn đoán xác định bệnh lý lâm sàng, chỉ đưa ra các khả năng định hướng tham khảo.",
+    "Không kê đơn thuốc cụ thể, không chỉ định liều lượng hoặc hoạt chất đặc trị khi chưa có bác sĩ thăm khám.",
+    "Luôn khuyến nghị bệnh nhân đến trực tiếp cơ sở y tế có pháp nhân và bác sĩ có chứng chỉ hành nghề.",
+    "Với các triệu chứng thuộc nhóm nguy hiểm tính mạng, yêu cầu kích hoạt hệ thống cấp cứu 115 ngay lập tức.",
+    "Không đưa ra các thông tin mang tính chất đe dọa, gây hoang mang hoặc đẩy bệnh nhân vào trạng thái sợ hãi.",
+    "Tôn trọng tối đa quyền riêng tư, bảo mật thông tin dữ liệu sức khỏe của người bệnh theo Luật Khám bệnh, chữa bệnh 2023.",
+    "Tích hợp dữ liệu từ thiết bị đeo thông minh theo tiêu chuẩn phân tầng nguy cơ y tế số hóa 2026.",
+    "Phải cập nhật liên tục các biến chủng truyền nhiễm mới và phác đồ xử trí ban đầu theo hướng dẫn của Cục Quản lý Khám chữa bệnh.",
+    "Tuyệt đối không hạ thấp tầm quan trọng của các dấu hiệu cảnh báo đỏ (Red Flags).",
+    "Phân định rõ ràng giữa các hướng dẫn chăm sóc giảm nhẹ tại nhà và các tiêu chuẩn bắt buộc phải nhập viện."
+  ],
+  "emergencySymptoms": {
+    "tier1_red_alert": [
+      "Đau ngực dữ dội, cảm giác bóp nghẹt kéo dài trên 15 phút, lan ra tay trái, vai hoặc hàm.",
+      "Khó thở cấp tính đột ngột, thở rít, co kéo cơ hô hấp phụ, không thể nói hết câu.",
+      "Liệt nửa người, méo miệng, yếu cơ mặt, nói ngọng hoặc mất ngôn ngữ đột ngột (Dấu hiệu đột quỵ cấp FAST).",
+      "Mất ý thức, hôn mê, gọi hỏi không phản ứng hoặc có cơn co giật toàn thân diện rộng.",
+      "Chảy máu cấp tính không cầm được bằng các biện pháp ép cơ học thông thường.",
+      "Đau bụng dữ dội đột ngột, bụng cứng như gỗ, có dấu hiệu phản ứng thành bụng.",
+      "Sốt cao trên 40 độ C không đáp ứng với thuốc hạ sốt đường uống kèm theo co giật hoặc li bì.",
+      "Phản ứng phản vệ cấp (Sốc phản vệ): Suy hô hấp, phù mạch nề vùng mặt, tụt huyết áp sau khi tiếp xúc dị nguyên.",
+      "Chấn thương sọ não kèm theo nôn mửa liên tục, giãn đồng tử hoặc chảy dịch tai/mũi.",
+      "Ngộ độc cấp tính chất độc, hóa chất hoặc thuốc quá liều kèm theo suy hô hấp, tuần hoàn."
+    ],
+    "tier2_orange_urgent": [
+      "Sốt cao liên tục trên 39 độ C kéo dài quá 48 giờ không rõ nguyên nhân.",
+      "Nôn mửa liên tục không thể giữ được nước hoặc thức ăn bằng đường uống.",
+      "Tiêu chảy cấp trên 10 lần/ngày kèm theo các dấu hiệu mất nước nặng như mắt trũng, khát nước dữ dội.",
+      "Đau đầu dữ dội đột ngột, tăng dần, kèm theo cứng cổ và sợ ánh sáng.",
+      "Đái máu đại thể (nước tiểu đỏ tươi hoặc có cục máu đông) kèm theo đau quặn thận.",
+      "Nhìn mờ đột ngột một bên hoặc cả hai bên mắt, đau nhức hốc mắt dữ dội.",
+      "Vàng da, vàng mắt tiến triển nhanh kèm theo mệt mỏi, chán ăn cực độ.",
+      "Phát ban da diện rộng dạng phỏng nước hoặc kèm theo loét các hốc tự nhiên (miệng, mắt, bộ phận sinh dục).",
+      "Bí tiểu cấp, bàng quang căng to đau tức vùng hạ vị.",
+      "Đau, sưng, nóng đỏ đột ngột một bên bắp chân (nghi ngờ huyết khối tĩnh mạch sâu)."
+    ]
+  },
+  "diagnosticGuidelines": {
+    "respiratory": {
+      "name": "Hô hấp",
+      "commonConditions": [
+        "Viêm phổi cộng đồng",
+        "Hen phế quản cấp/mạn tính",
+        "Bệnh phổi tắc nghẽn mạn tính (COPD) đợt cấp",
+        "Nhiễm virus đường hô hấp cấp tính (COVID-19 biến chủng 2026, Cúm A/H5N1, RSV)",
+        "Viêm phế quản cấp tính"
+      ],
+      "keySymptoms": [
+        "Ho khan hoặc ho có đờm đặc (xanh, vàng, rỉ sắt)",
+        "Khó thở, thở khò khè, thở rít khi gắng sức hoặc khi nghỉ ngơi",
+        "Đau tức ngực tăng lên khi hít thở sâu hoặc khi ho",
+        "Sốt, ớn lạnh, vã mồ hôi về đêm",
+        "Mệt mỏi cơ thể, giảm khả năng gắng sức thông thường"
+      ],
+      "recommendedTests": [
+        "X-quang phổi thẳng/nghiêng hoặc CT-scanner lồng ngực liều thấp",
+        "Đo bão hòa oxy máu ngoại vi (SpO2) liên tục",
+        "Tổng phân tích tế bào máu ngoại vi (CBC) và định lượng CRP/Procalcitonin",
+        "Đo chức năng hô hấp (Hô hấp ký) ngoài đợt cấp",
+        "Xét nghiệm đa mồi Real-time PCR panel tác nhân đường hô hấp"
+      ],
+      "warningSign": "Chỉ số SpO2 dưới 94% khi thở khí trời hoặc nhịp thở vượt quá 24 lần/phút ở người lớn → Cần hỗ trợ y tế khẩn cấp.",
+      "homeCareRestrictions": [
+        "Không tự ý xông thuốc ngắt quãng bằng các loại lá cây không rõ nguồn gốc khi đang khó thở.",
+        "Không lạm dụng các thuốc kháng viêm Corticoid đường uống mà không có chỉ định chuyên khoa."
+      ]
+    },
+    "cardiovascular": {
+      "name": "Tim mạch",
+      "commonConditions": [
+        "Tăng huyết áp vô căn (Cập nhật mục tiêu huyết áp 2026)",
+        "Hội chứng mạch vành cấp (Nhồi máu cơ tim)",
+        "Suy tim mạn tính mất bù",
+        "Rối loạn nhịp tim (Rung nhĩ, nhịp nhanh kịch phát trên thất)",
+        "Bệnh tim thiếu máu cục bộ mạn tính"
+      ],
+      "keySymptoms": [
+        "Đau thắt ngực vùng sau xương ức, có thể lan lên cổ, hàm, hoặc tay trái",
+        "Hồi hộp, đánh trống ngực, cảm giác tim bỏ nhịp hoặc đập nhanh bất thường",
+        "Phù hai chi dưới, phù mềm, ấn lõm, tăng nặng về buổi chiều",
+        "Khó thở khi nằm thấp đầu, phải ngồi dậy để thở về đêm",
+        "Chóng mặt, choáng váng hoặc ngất xỉu khi thay đổi tư thế đột ngột"
+      ],
+      "recommendedTests": [
+        "Điện tâm đồ (ECG) 12 chuyển đạo tại giường hoặc Holter ECG 24-72 giờ",
+        "Siêu âm tim Doppler màu đánh giá chức năng tâm thu (EF)",
+        "Xét nghiệm định lượng động học Men tim (Troponin T/I siêu nhạy)",
+        "Định lượng nồng độ peptide lợi niệu (NT-proBNP hoặc BNP)",
+        "Theo dõi huyết áp tự động 24 giờ (ABPM)"
+      ],
+      "warningSign": "Cơn đau ngực kèm theo vã mồ hôi lạnh, buồn nôn và cảm giác hoảng sợ → Nghi ngờ nhồi máu cơ tim cấp, gọi ngay 115.",
+      "homeCareRestrictions": [
+        "Không tự ý ngưng thuốc hạ huyết áp đột ngột để tránh cơn tăng huyết áp bùng phát (Rebound).",
+        "Không tự ý tăng liều các thuốc trợ tim hoặc lợi tiểu khi thấy phù chân tăng mà chưa tái khám."
+      ]
+    },
+    "gastrointestinal": {
+      "name": "Tiêu hóa",
+      "commonConditions": [
+        "Viêm dạ dày - tá tràng cấp/mạn tính",
+        "Loét dạ dày tá tràng có hoặc không có nhiễm H.pylori",
+        "Viêm ruột thừa cấp tính",
+        "Bệnh trào ngược dạ dày thực quản (GERD)",
+        "Hội chứng ruột kích thích (IBS)",
+        "Viêm tụy cấp"
+      ],
+      "keySymptoms": [
+        "Đau bụng vùng thượng vị, đau quặn từng cơn vùng quanh rốn hoặc hố chậu",
+        "Buồn nôn, nôn mửa ra thức ăn cũ hoặc dịch mật/máu",
+        "Thay đổi thói quen đại tiện: Tiêu chảy kéo dài hoặc táo bón mãn tính",
+        "Đầy hơi, chướng bụng, ợ chua, ợ nóng sau khi ăn",
+        "Phân có máu tươi, phân đen như hắc ín hoặc có mùi thối khắm đặc trưng"
+      ],
+      "recommendedTests": [
+        "Nội soi dạ dày - tá tràng và đại trực tràng ống mềm có an thần",
+        "Siêu âm ổ bụng tổng quát hệ 2D/4D",
+        "Test hơi thở (Urea Breath Test) hoặc test kháng nguyên phân tìm H.pylori",
+        "Tổng phân tích mẫu phân, tìm máu ẩn trong phân (FOBT)",
+        "Định lượng Amylase và Lipase máu nếu nghi ngờ viêm tụy"
+      ],
+      "warningSign": "Đau bụng dữ dội khu trú hố chậu phải hoặc đau lan tỏa toàn bụng kèm sốt, bụng cứng đơ → Dấu hiệu ngoại khoa cấp cứu.",
+      "homeCareRestrictions": [
+        "Không được tự ý dùng thuốc giảm đau nhóm NSAIDs hoặc Opioids khi chưa rõ nguyên nhân đau bụng nhằm tránh làm lu mờ triệu chứng ngoại khoa.",
+        "Không tự ý thụt tháo đại tràng bằng các phương pháp dân gian chưa được kiểm chứng."
+      ]
+    },
+    "neurological": {
+      "name": "Thần kinh",
+      "commonConditions": [
+        "Đau đầu căng thẳng cơ",
+        "Đau đầu Migraine (Đau nửa đầu)",
+        "Tai biến mạch máu não (Đột quỵ não dạng nhồi máu hoặc xuất huyết)",
+        "Hội chứng tiền đình trung ương/ngoại biên",
+        "Bệnh động kinh và các rối loạn co giật"
+      ],
+      "keySymptoms": [
+        "Đau đầu dữ dội, đau âm ỉ hoặc đau nhói theo nhịp mạch đập",
+        "Chóng mặt, cảm giác nhà cửa quay cuồng, mất thăng bằng không thể đi lại",
+        "Tê bì, châm chích hoặc giảm cảm giác ở một vùng cơ thể hoặc nửa người",
+        "Yếu, liệt hoặc vụng về khi thực hiện động tác ở tay, chân",
+        "Rối loạn thị giác đột ngột: Nhìn đôi (song thị), mờ mắt hoặc mất thị trường"
+      ],
+      "recommendedTests": [
+        "Chụp cắt lớp vi tính (CT Scan) sọ não không cản quang hoặc có cản quang",
+        "Chụp cộng hưởng từ (MRI) sọ não và mạch máu não (MRA)",
+        "Điện não đồ (EEG) kỹ thuật số kỹ thuật cao",
+        "Siêu âm Doppler hệ mạch cảnh và mạch đốt sống nền",
+        "Chọc dò dịch não tủy khi có nghi ngờ nhiễm trùng thần kinh trung ương"
+      ],
+      "warningSign": "Đau đầu khởi phát đột ngột dữ dội chưa từng có trong đời (đau đầu kiểu sấm sét) kèm theo gáy cứng → Nguy cơ xuất huyết dưới nhện.",
+      "homeCareRestrictions": [
+        "Không tự ý cạo gió, bấm huyệt mạnh vùng cổ gáy trong giai đoạn nghi ngờ đột quỵ cấp.",
+        "Không tự ý sử dụng các thuốc an thần liều cao tại nhà mà không có chẩn đoán nguyên nhân đau đầu."
+      ]
+    },
+    "endocrine": {
+      "name": "Nội tiết",
+      "commonConditions": [
+        "Đái tháo đường (Typ 1, Typ 2) và đái tháo đường thai kỳ",
+        "Hội chứng cường giáp (Bệnh Graves/Basedow)",
+        "Suy giáp lâm sàng và dưới lâm sàng",
+        "Hội chứng Cushing do thuốc hoặc do u tuyến yên",
+        "Rối loạn chuyển hóa Lipid máu phối hợp"
+      ],
+      "keySymptoms": [
+        "Ăn nhiều, uống nhiều, tiểu nhiều và sụt cân nhanh chóng không rõ lý do",
+        "Mệt mỏi kéo dài, kiệt sức, giảm khả năng tập trung công việc",
+        "Nhịp tim nhanh ngay cả khi nghỉ ngơi, run tay biên độ nhỏ ở các ngón tay",
+        "Sợ lạnh, tăng cân dù ăn uống kém, da khô, tóc dễ gãy rụng",
+        "Vết thương, vết loét ở da (đặc biệt là bàn chân) rất lâu lành hoặc dễ nhiễm trùng"
+      ],
+      "recommendedTests": [
+        "Định lượng đường huyết tương lúc đói (FPG) và nghiệm pháp dung nạp glucose",
+        "Xét nghiệm chỉ số HbA1c (Tiêu chuẩn kiểm soát đường huyết 3 tháng)",
+        "Bilan hormone tuyến giáp toàn diện: TSH, FT3, FT4 và kháng thể kháng giáp",
+        "Định lượng Cortisol máu tám giờ sáng và ACTH",
+        "Xét nghiệm bộ mỡ máu: Cholesterol toàn phần, Triglyceride, LDL-C, HDL-C"
+      ],
+      "warningSign": "Người bệnh đái tháo đường có đường huyết > 300 mg/dL kèm theo nôn mửa, hơi thở có mùi trái cây chín, đau bụng → Nguy cơ nhiễm toan ceton.",
+      "homeCareRestrictions": [
+        "Tuyệt đối không tự ý ngưng tiêm Insulin hoặc ngưng thuốc uống chuyển sang dùng các loại viên hoàn, thảo dược không rõ nguồn gốc.",
+        "Không áp dụng các chế độ ăn kiêng cực đoan (như nhịn ăn hoàn toàn) mà không có tư vấn của chuyên gia dinh dưỡng lâm sàng."
+      ]
+    },
+    "musculoskeletal": {
+      "name": "Cơ xương khớp",
+      "commonConditions": [
+        "Viêm khớp dạng thấp",
+        "Thoái hóa khớp (Khớp gối, cột sống thắt lưng, cột sống cổ)",
+        "Bệnh Gout (Gút) cấp và mạn tính",
+        "Thoát vị đĩa đệm cột sống kèm chèn ép rễ thần kinh",
+        "Loãng xương nguyên phát và thứ phát"
+      ],
+      "keySymptoms": [
+        "Đau, sưng, nóng đỏ ở một hoặc nhiều khớp (đặc biệt các khớp nhỏ bàn tay, bàn chân)",
+        "Cứng khớp buổi sáng kéo dài trên 30 phút, khó vận động ngay khi ngủ dậy",
+        "Đau lưng, đau vùng thắt lưng lan xuống mông và chân theo đường đi của thần kinh tọa",
+        "Biến dạng khớp, có các hạt tophi nổi dưới da quanh vùng khớp",
+        "Giảm chiều cao cơ thể đột ngột hoặc gù vẹo cột sống tiến triển"
+      ],
+      "recommendedTests": [
+        "X-quang quy ước các khớp tổn thương và cột sống thẳng/nghiêng",
+        "Định lượng nồng độ Acid Uric trong máu",
+        "Xét nghiệm yếu tố dạng thấp (RF) và kháng thể Anti-CCP siêu nhạy",
+        "Đo mật độ xương bằng phương pháp hấp thụ tia X năng lượng kép (DEXA)",
+        "Siêu âm khớp tổn thương phát hiện dịch khớp và tổn thương màng hoạt dịch"
+      ],
+      "warningSign": "Đau lưng dữ dội cấp tính kèm theo mất cảm giác vùng yên ngựa, tê bì hai chân, mất kiểm soát đại tiểu tiện → Hội chứng đuôi ngựa cấp cứu.",
+      "homeCareRestrictions": [
+        "Không tự ý tiêm trực tiếp bất kỳ loại thuốc nào vào ổ khớp tại các phòng khám không đảm bảo điều kiện vô trùng vô khuẩn.",
+        "Không lạm dụng các bài thuốc đắp lá, đắp thuốc nam không rõ thành phần lên khớp đang sưng nóng đỏ vì dễ gây viêm khớp nhiễm khuẩn."
+      ]
+    },
+    "infectious": {
+      "name": "Truyền nhiễm",
+      "commonConditions": [
+        "Sốt xuất huyết Dengue (Cập nhật phân loại cảnh báo sốc 2026)",
+        "Cúm mùa và các chủng cúm gia cầm độc lực cao",
+        "Bệnh viêm gan virus cấp và mạn tính (A, B, C, E)",
+        "Nhiễm khuẩn huyết và sốc nhiễm khuẩn",
+        "Bệnh Mpox (Đậu mùa khỉ) các biến chủng mới"
+      ],
+      "keySymptoms": [
+        "Sốt cao đột ngột liên tục, kèm theo rét run hoặc ớn lạnh sâu",
+        "Đau mỏi toàn thân, đau cơ, đau nhức sâu trong hốc mắt",
+        "Phát ban đỏ trên da, có các chấm xuất huyết dưới da không biến mất khi ấn kính",
+        "Mụn nước, phỏng nước tiến triển trên da hoặc niêm mạc",
+        "Vã mồ hôi, li bì, lơ mơ hoặc kích thích vật vã"
+      ],
+      "recommendedTests": [
+        "Tổng phân tích tế bào máu ngoại vi theo dõi sát số lượng tiểu cầu và hematocrit",
+        "Xét nghiệm kháng nguyên NS1, kháng thể IgM/IgG Dengue",
+        "Định lượng nồng độ chất chỉ điểm viêm tốc độ cao: CRP, PCT",
+        "Cấy máu định danh vi khuẩn và làm kháng sinh đồ tự động",
+        "Xét nghiệm tải lượng virus (HBV-DNA, HCV-RNA) bằng kỹ thuật Real-time PCR"
+      ],
+      "warningSign": "Sốt xuất huyết vào ngày thứ 4 - ngày thứ 7 của bệnh xuất hiện đau bụng vùng gan, nôn mửa liên tục, chảy máu răng/mũi → Dấu hiệu cảnh báo nguy hiểm.",
+      "homeCareRestrictions": [
+        "Không sử dụng các thuốc hạ sốt nhóm Ibuprofen, Aspirin khi chưa loại trừ sốt xuất huyết vì nguy cơ gây xuất huyết nặng không cầm được.",
+        "Không tự ý truyền dịch (Nước muối sinh lý, Glucose) tại nhà khi chưa có chỉ định của bác sĩ và không có phương tiện cấp cứu sốc."
+      ]
+    },
+    "nephrology_urology": {
+      "name": "Thận - Tiết niệu",
+      "commonConditions": [
+        "Nhiễm trùng đường tiết niệu (Viêm bàng quang, viêm thận bể thận cấp)",
+        "Sỏi đường tiết niệu (Sỏi thận, sỏi quản, sỏi bàng quang)",
+        "Bệnh thận mạn tính các giai đoạn KDOQI",
+        "Hội chứng thận hư nguyên phát",
+        "Phì đại lành tính tuyến tiền liệt"
+      ],
+      "keySymptoms": [
+        "Đau buốt, đau rát khi đi tiểu, tiểu rắt, đi nhiều lần nhưng lượng nước tiểu ít",
+        "Nước tiểu đục, có mủ, có mùi hôi hoặc nước tiểu có màu hồng, đỏ",
+        "Đau quặn vùng hông lưng (cơn đau quặn thận), lan xuống vùng bẹn sinh dục",
+        "Phù toàn thân, bắt đầu từ phù mi mắt vào buổi sáng khi ngủ dậy",
+        "Tiểu đêm nhiều lần, tia nước tiểu yếu, tiểu ngắt quãng không thành dòng"
+      ],
+      "recommendedTests": [
+        "Tổng phân tích nước tiểu 10 thông số hoặc soi cặn lắng nước tiểu",
+        "Định lượng Creatinin và Ure huyết thanh, tính tốc độ lọc cầu thận ước tính (eGFR)",
+        "Siêu âm hệ tiết niệu (Thận, bàng quang, tuyến tiền liệt)",
+        "Chụp hệ tiết niệu không chuẩn bị (KUB) hoặc chụp cắt lớp vi tính hệ mạch thận",
+        "Định lượng Protein niệu 24 giờ"
+      ],
+      "warningSign": "Lượng nước tiểu giảm đột ngột dưới 400ml/24 giờ (thiểu niệu) hoặc không có nước tiểu (vô niệu) kèm theo phù tăng nhanh, khó thở → Suy thận cấp tính.",
+      "homeCareRestrictions": [
+        "Không tự ý uống các loại thuốc lợi tiểu Tây y hoặc các bài thuốc Bắc lợi tiểu mạnh khi đang có tình trạng tắc nghẽn đường tiểu do sỏi.",
+        "Không lạm dụng các viên sủi vitamin C liều cao kéo dài vì làm tăng nguy cơ hình thành sỏi Oxalat tại thận."
+      ]
+    },
+    "mental_health": {
+      "name": "Sức khỏe tâm thần",
+      "commonConditions": [
+        "Rối loạn trầm cảm chủ yếu (MDD)",
+        "Rối loạn lo âu lan tỏa (GAD)",
+        "Rối loạn mất ngủ kéo dài và rối loạn nhịp sinh học",
+        "Hội chứng kiệt sức do áp lực mạn tính (Burnout Syndrome)",
+        "Rối loạn hoảng sợ cấp tính"
+      ],
+      "keySymptoms": [
+        "Tâm trạng buồn bã, trống rỗng, mất hứng thú với tất cả các hoạt động từng thích",
+        "Lo lắng, bồn chồn, bất an quá mức về các vấn đề hằng ngày không thể kiểm soát",
+        "Khó vào giấc ngủ, tỉnh giấc giữa đêm khó ngủ lại hoặc ngủ dậy mệt mỏi kéo dài",
+        "Cảm giác kiệt sức, mất năng lượng, cảm thấy bản thân bất tài hoặc tội lỗi vô cớ",
+        "Có các cơn hoảng sợ kịch phát kèm theo cảm giác nghẹt thở, tim đập nhanh như sắp chết"
+      ],
+      "recommendedTests": [
+        "Đánh giá bằng các thang đo chuẩn hóa lâm sàng: PHQ-9, GAD-7, ISI",
+        "Trắc nghiệm tâm lý chuyên sâu đánh giá nhân cách và nhận thức",
+        "Điện não đồ video theo dõi chu kỳ giấc ngủ nếu có rối loạn giấc ngủ nặng",
+        "Xét nghiệm loại trừ các bệnh lý thực thể: Định lượng Cortisol, nội tiết tố tuyến giáp",
+        "Đánh giá chức năng nhận thức tổng quát (MMSE hoặc MoCA)"
+      ],
+      "warningSign": "Xuất hiện ý nghĩ tự sát, hành vi tự hủy hoại bản thân hoặc có các ảo thanh xúi giục làm hại bản thân/người khác → Cần can thiệp tâm thần khẩn cấp.",
+      "homeCareRestrictions": [
+        "Tuyệt đối không tự ý dùng lại đơn thuốc chống trầm cảm hoặc thuốc ngủ của người khác.",
+        "Không tự ý ngưng đột ngột các thuốc nhóm Benzodiazepines để tránh hội chứng cai thuốc nguy hiểm."
+      ]
+    },
+    "dermatology_allergy": {
+      "name": "Da liễu & Dị ứng",
+      "commonConditions": [
+        "Viêm da cơ địa biến chứng nhiễm trùng",
+        "Mề đay mạn tính vô căn",
+        "Vảy nến thể mảng tiến triển",
+        "Hội chứng Stevens-Johnson và hoại tử thượng bì nhiễm độc (TEN) do thuốc",
+        "Nhiễm trùng da do tụ cầu vàng hoặc liên cầu khuẩn (Chốc, nhọt, viêm quầng)"
+      ],
+      "keySymptoms": [
+        "Ngứa da dữ dội, dai dẳng, tăng lên về đêm gây mất ngủ",
+        "Các sẩn đỏ, mảng hồng ban, sưng nề có tính chất di chuyển hoặc cố định",
+        "Tổn thương da dạng mụn nước, bóng nước lớn, dễ vỡ tạo vết trợt rỉ dịch",
+        "Da khô, bong tróc vảy dày thành từng mảng diện rộng, nứt nẻ chảy máu",
+        "Loét niêm mạc môi, miệng, mắt kèm theo tổn thương da"
+      ],
+      "recommendedTests": [
+        "Soi tươi tìm nấm da, ký sinh trùng (Demodex, ghẻ)",
+        "Định lượng nồng độ IgE toàn phần và các dị nguyên đặc hiệu (Panel 60/120 dị nguyên)",
+        "Sinh thiết da tổn thương làm mô bệnh học trong trường hợp khó chẩn đoán",
+        "Nuôi cấy dịch tổn thương da tìm vi khuẩn và làm kháng sinh đồ da liễu",
+        "Các test da: Test áp (Patch test), test lẩy da (Prick test) với dị nguyên"
+      ],
+      "warningSign": "Phát ban da tiến triển nhanh sau khi dùng thuốc kèm theo sốt cao, loét niêm mạc các hốc tự nhiên → Nguy cơ dị ứng thuốc thể nặng đe dọa tính mạng.",
+      "homeCareRestrictions": [
+        "Không tự ý mua các loại kem bôi có chứa Corticoid nồng độ cao (thuốc trộn) bôi diện rộng kéo dài gây teo da, rạn da, suy tuyến thượng thận.",
+        "Không tắm bằng các loại lá cây rừng, nước muối đậm đặc khi da đang tổn thương trợt loét nặng."
+      ]
+    }
+  },
+  "digitalHealthGuidelines2026": {
+    "wearableDataIntegration": {
+      "description": "Tiêu chuẩn xử lý dữ liệu sức khỏe từ thiết bị đeo thông minh (Smartwatch, Continuous Glucose Monitor - CGM, Smart Ring) theo cập nhật y tế số 2026.",
+      "actionableThresholds": [
+        {
+          "parameter": "Nhịp tim lúc nghỉ (Resting Heart Rate)",
+          "condition": "Vượt quá 120 nhịp/phút hoặc dưới 45 nhịp/phút kéo dài trên 10 phút ở trạng thái tĩnh hoàn toàn.",
+          "recommendation": "Ghi nhận điện tâm đồ một chuyển đạo (Single-lead ECG) trên thiết bị, xuất file PDF và liên hệ bác sĩ tim mạch để sàng lọc rối loạn nhịp."
+        },
+        {
+          "parameter": "Thông báo Rung nhĩ tự động (Irregular Rhythm Notification)",
+          "condition": "Thiết bị cảnh báo nhịp tim không đều lặp lại trên 3 lần trong vòng 24 giờ.",
+          "recommendation": "Không hoảng sợ, không tự ý uống các thuốc chống đông máu. Cần đến cơ sở y tế đo ECG 12 chuyển đạo tiêu chuẩn để xác thực."
+        },
+        {
+          "parameter": "Nồng độ Oxy trong máu (SpO2 ban đêm)",
+          "condition": "SpO2 tụt xuống dưới 90% lặp lại nhiều lần trong đêm kèm theo ghi nhận ngáy to.",
+          "recommendation": "Sàng lọc hội chứng ngừng thở khi ngủ (OSA). Khuyến nghị đo đa ký giấc ngủ (Polysomnography)."
+        },
+        {
+          "parameter": "Theo dõi đường huyết liên tục (CGM Data)",
+          "condition": "Chỉ số Glucose cảm biến dưới 54 mg/dL (Hạ đường huyết nghiêm trọng) hoặc trên 250 mg/dL kéo dài kèm theo chỉ số Ceton nước tiểu dương tính.",
+          "recommendation": "Áp dụng quy tắc 15-15 đối với hạ đường huyết (ăn 15g carbohydrate dạng nhanh, đợi 15 phút kiểm tra lại). Nếu không cải thiện, nhập viện ngay."
+        }
+      ]
+    },
+    "telehealthConsultationCriteria": {
+      "eligibleConditions": [
+        "Tái khám định kỳ bệnh lý mạn tính ổn định (Tăng huyết áp, Đái tháo đường kiểm soát tốt chỉ số HbA1c).",
+        "Tư vấn tâm lý, liệu pháp nhận thức hành vi (CBT) cho các rối loạn lo âu, trầm cảm nhẹ đến vừa.",
+        "Sàng lọc ban đầu các tổn thương da liễu qua hình ảnh độ phân giải cao.",
+        "Hướng dẫn tập vật lý trị liệu, phục hồi chức năng sau chấn thương giai đoạn muộn.",
+        "Giải thích kết quả xét nghiệm chuyên sâu và lập kế hoạch tầm soát sức khỏe chủ động."
+      ],
+      "exclusionCriteria": [
+        "Mọi trường hợp có ít nhất một triệu chứng thuộc nhóm Cấp cứu nguy hiểm (Tier 1 và Tier 2).",
+        "Bệnh nhân không có người hỗ trợ công nghệ hoặc suy giảm nhận thức nặng không thể giao tiếp trực tuyến.",
+        "Các tình trạng bệnh cấp tính tiến triển nhanh trong vòng 12 giờ qua."
+      ]
+    }
+  },
+  "ageSpecificGuidelines": {
+    "neonatal": {
+      "ageRange": "Trẻ sơ sinh từ 0 đến 28 ngày tuổi",
+      "criticalNotes": [
+        "Mọi trường hợp sốt với nhiệt độ đo ở hậu môn hoặc nách từ 38°C trở lên đều được coi là cấp cứu y khoa bắt buộc nhập viện.",
+        "Dấu hiệu bú kém, bỏ bú, ngủ li bì khó đánh thức, hoặc khóc thét âm sắc cao là dấu hiệu nhiễm trùng nặng.",
+        "Vàng da xuất hiện trước 24 giờ sau sinh hoặc vàng da lan đến lòng bàn tay, bàn chân cần chiếu đèn ngay lập tức để tránh vàng da nhân não.",
+        "Tuyệt đối không tự ý dùng bất kỳ loại thuốc hạ sốt, kháng sinh hay thực phẩm chức năng nào cho trẻ sơ sinh tại nhà mà không có y lệnh."
+      ]
+    },
+    "pediatric": {
+      "ageRange": "Trẻ em từ 29 ngày tuổi đến 15 tuổi",
+      "criticalNotes": [
+        "Sốt ở trẻ em cần kết hợp đánh giá toàn trạng (sự linh hoạt, giao tiếp bằng mắt, mức độ chơi ngoan) thay vì chỉ nhìn vào chỉ số nhiệt độ.",
+        "Tuyệt đối nghiêm cấm việc tự ý sử dụng Aspirin hạ sốt cho trẻ em do nguy cơ gây hội chứng Reye hoại tử gan não cấp tính.",
+        "Dấu hiệu rút lõm lồng ngực khi trẻ nằm yên là minh chứng của tình trạng suy hô hấp nặng, cần nhập viện ngay lập tức.",
+        "Khi trẻ bị tiêu chảy, ưu tiên hàng đầu là bù nước bằng dung dịch Oresol pha đúng tỷ lệ hướng dẫn trên bao bì, không tự ý dùng thuốc cầm tiêu chảy nhóm giảm nhu động ruột."
+      ]
+    },
+    "elderly": {
+      "ageRange": "Người cao tuổi trên 65 tuổi",
+      "criticalNotes": [
+        "Người cao tuổi bị nhiễm trùng nặng (viêm phổi, nhiễm trùng tiểu) có thể hoàn toàn không có triệu chứng sốt, thậm chí bị hạ thân nhiệt hoặc thay đổi ý thức đột ngột (mê sảng).",
+        "Triệu chứng nhồi máu cơ tim ở người già thường không điển hình, đôi khi chỉ biểu hiện bằng mệt xỉu, khó thở nhẹ, hoặc đau tức vùng thượng vị giống đau dạ dày.",
+        "Nguy cơ tương tác thuốc cực kỳ cao do tình trạng đa bệnh lý (Polymorbidity) và đa dược phẩm (Polypharmacy). Cần rà soát kỹ chức năng gan thận trước khi dùng thuốc mới.",
+        "Té ngã ở người già là một biến cố nghiêm trọng, cần chụp X-quang loại trừ gãy cổ xương đùi hoặc CT scan loại trừ tụ máu dưới màng cứng mạn tính ngay cả khi không đập đầu trực tiếp."
+      ]
+    },
+    "pregnant_lactating": {
+      "ageRange": "Phụ nữ trong giai đoạn mang thai và cho con bú",
+      "criticalNotes": [
+        "Nguyên tắc an toàn dược lý cao nhất: Không tự ý sử dụng bất kỳ loại thuốc nào bao gồm cả thuốc thảo dược, thực phẩm chức năng trong 3 tháng đầu thai kỳ.",
+        "Bất kỳ tình trạng đau bụng dưới kèm theo ra máu âm đạo bất thường nào trong thai kỳ đều cần đến ngay bệnh viện phụ sản chuyên khoa để loại trừ dọa sảy thai, sảy thai hoặc thai ngoài tử cung.",
+        "Huyết áp đo được từ 140/90 mmHg trở lên sau tuần thứ 20 của thai kỳ kèm theo phù chân là dấu hiệu cảnh báo tiền sản giật, đe dọa tính mạng cả mẹ và con.",
+        "Khi cho con bú, phần lớn các thuốc kháng sinh, thuốc giảm đau đều có thể bài tiết qua sữa mẹ. Cần tra cứu thang phân loại an toàn LactMed trước khi chỉ định."
+      ]
+    }
+  },
+  "prohibitedActions": [
+    "Nghiêm cấm việc đưa ra kết luận chẩn đoán xác định các bệnh lý ác tính (ung thư, u lympho) chỉ dựa trên mô tả triệu chứng lâm sàng của hệ thống.",
+    "Nghiêm cấm việc kê đơn, hướng dẫn tự mua các loại thuốc kháng sinh cụ thể (như Amoxicillin, Azithromycin, Ciprofloxacin) nhằm tránh làm trầm trọng thêm tình trạng kháng kháng sinh toàn cầu.",
+    "Không hướng dẫn bệnh nhân tự điều trị, tự theo dõi tại nhà khi họ đã xuất hiện các dấu hiệu cảnh báo nguy hiểm thuộc nhóm cấp cứu.",
+    "Không đưa ra bất kỳ thông tin tư vấn nào mâu thuẫn hoặc đi ngược lại với Hướng dẫn chẩn đoán và điều trị chuẩn hóa hiện hành của Bộ Y Tế Việt Nam.",
+    "Không phủ nhận, giảm nhẹ hoặc xem nhẹ các triệu chứng chủ quan mang tính nghiêm trọng do bệnh nhân cung cấp.",
+    "Không được quảng cáo, điều hướng bệnh nhân mua các thực phẩm chức năng, sản phẩm bổ trợ thay thế cho các phương pháp điều trị y học chính thống.",
+    "Không thay đổi phác đồ điều trị chuyên khoa hiện tại của bệnh nhân khi chưa có sự hội chẩn trực tiếp với bác sĩ điều trị của họ.",
+    "Không sử dụng các thuật ngữ y học quá chuyên sâu mang tính hù dọa mà không giải thích rõ ràng, gây tâm lý lo lắng tiêu cực cho người bệnh.",
+    "Không phân tích kết quả xét nghiệm cận lâm sàng một cách độc lập mà tách rời khỏi bối cảnh diễn tiến lâm sàng của người bệnh.",
+    "Nghiêm cấm việc tự ý đề xuất các phương pháp điều trị mang tính thử nghiệm, chưa được hội đồng đạo đức y học cấp phép."
+  ],
+  "disclaimer": "Hệ thống hỗ trợ ra quyết định và phân tầng nguy cơ y tế dựa trên trí tuệ nhân tạo (AI) này chỉ phục vụ mục đích tham khảo thông tin ban đầu, định hướng phân khoa khám bệnh phù hợp. Hệ thống tuyệt đối không có tư cách pháp lý và năng lực chuyên môn để thay thế cho quy trình khám bệnh, chẩn đoán lâm sàng, cận lân sàng và chỉ định phác đồ điều trị của các bác sĩ chuyên khoa có giấy phép hành nghề hợp pháp. Mọi quyết định tự ý áp dụng thuốc hoặc thay đổi chế độ điều trị dựa trên thông tin từ hệ thống này mà không qua thăm khám trực tiếp đều có thể dẫn đến các tai biến y khoa nghiêm trọng đe dọa trực tiếp đến sức khỏe và tính mạng của người bệnh."
+}

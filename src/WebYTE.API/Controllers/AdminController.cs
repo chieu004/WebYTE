@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using WebYTE.Application.DTOs.Admin;
 using WebYTE.Application.DTOs.Doctor;
+using WebYTE.Application.DTOs.Medication;
 using WebYTE.Application.DTOs.Patient;
 using WebYTE.Application.DTOs.Staff;
 using WebYTE.Application.Interfaces;
@@ -61,6 +62,13 @@ public class AdminController : ControllerBase
 
     // ==================== DOCTOR MANAGEMENT ====================
     
+    [HttpPost("doctors/create")]
+    public async Task<IActionResult> CreateDoctorAccount([FromBody] CreateDoctorAccountDto request)
+    {
+        var (success, message) = await _adminService.CreateDoctorAccountAsync(request);
+        return success ? Ok(new { Message = message }) : BadRequest(new { Message = message });
+    }
+
     [HttpGet("doctors")]
     public async Task<IActionResult> GetAllDoctors()
     {
@@ -131,6 +139,13 @@ public class AdminController : ControllerBase
 
     // ==================== STAFF MANAGEMENT ====================
     
+    [HttpPost("staffs/create")]
+    public async Task<IActionResult> CreateStaffAccount([FromBody] CreateStaffAccountDto request)
+    {
+        var (success, message) = await _adminService.CreateStaffAccountAsync(request);
+        return success ? Ok(new { Message = message }) : BadRequest(new { Message = message });
+    }
+
     [HttpGet("staffs")]
     public async Task<IActionResult> GetAllStaffs()
     {
@@ -162,5 +177,35 @@ public class AdminController : ControllerBase
         if (!success)
             return BadRequest("Xóa thất bại.");
         return Ok(new { Message = "Xóa nhân viên thành công" });
+    }
+
+    // ==================== MEDICATION MANAGEMENT ====================
+
+    [HttpGet("medications")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetMedications()
+    {
+        return Ok(await _adminService.GetAllMedicationsAsync());
+    }
+
+    [HttpPost("medications")]
+    public async Task<IActionResult> CreateMedication([FromBody] MedicationDto request)
+    {
+        var result = await _adminService.CreateMedicationAsync(request);
+        return Created("", result);
+    }
+
+    [HttpPut("medications/{id}")]
+    public async Task<IActionResult> UpdateMedication(Guid id, [FromBody] MedicationDto request)
+    {
+        var success = await _adminService.UpdateMedicationAsync(id, request);
+        return success ? Ok(new { Message = "Cập nhật thuốc thành công" }) : BadRequest("Cập nhật thất bại.");
+    }
+
+    [HttpDelete("medications/{id}")]
+    public async Task<IActionResult> DeleteMedication(Guid id)
+    {
+        var success = await _adminService.DeleteMedicationAsync(id);
+        return success ? Ok(new { Message = "Xóa thuốc thành công" }) : BadRequest("Xóa thất bại.");
     }
 }

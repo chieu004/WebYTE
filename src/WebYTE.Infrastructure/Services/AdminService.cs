@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebYTE.Application.DTOs.Admin;
 using WebYTE.Application.DTOs.Doctor;
+using WebYTE.Application.DTOs.Medication;
 using WebYTE.Application.DTOs.Patient;
 using WebYTE.Application.DTOs.Staff;
 using WebYTE.Application.Interfaces;
@@ -19,11 +20,13 @@ public class AdminService : IAdminService
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
-    public AdminService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public AdminService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
     {
         _context = context;
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public async Task<List<ManageUserDto>> GetAllUsersAsync()
@@ -345,6 +348,145 @@ public class AdminService : IAdminService
         staff.User.IsActive = false;
         staff.UpdatedAt = DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // ==================== TẠO TÀI KHOẢN BÁC SĨ / NHÂN VIÊN ====================
+
+    public async Task<(bool Success, string Message)> CreateDoctorAccountAsync(CreateDoctorAccountDto request)
+    {
+        if (await _userManager.FindByEmailAsync(request.Email) != null)
+            return (false, "Email đã được sử dụng.");
+
+        var user = new ApplicationUser
+        {
+            Email = request.Email,
+            UserName = request.Email,
+            FullName = request.FullName,
+            PhoneNumber = request.Phone,
+            Gender = request.Gender,
+            UserRole = RoleType.Doctor,
+            IsActive = true
+        };
+
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+            return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
+
+        if (!await _roleManager.RoleExistsAsync("Doctor"))
+            await _roleManager.CreateAsync(new IdentityRole<Guid> { Name = "Doctor" });
+        await _userManager.AddToRoleAsync(user, "Doctor");
+
+        _context.Doctors.Add(new Doctor
+        {
+            UserId = user.Id,
+            SpecialtyId = request.SpecialtyId,
+            Qualifications = request.Qualifications,
+            Experience = request.Experience,
+            ConsultationFee = request.ConsultationFee,
+            Bio = request.Bio
+        });
+
+        await _context.SaveChangesAsync();
+        return (true, "Tạo tài khoản bác sĩ thành công.");
+    }
+
+    public async Task<(bool Success, string Message)> CreateStaffAccountAsync(CreateStaffAccountDto request)
+    {
+        if (await _userManager.FindByEmailAsync(request.Email) != null)
+            return (false, "Email đã được sử dụng.");
+
+        var user = new ApplicationUser
+        {
+            Email = request.Email,
+            UserName = request.Email,
+            FullName = request.FullName,
+            PhoneNumber = request.Phone,
+            Gender = request.Gender,
+            UserRole = RoleType.Staff,
+            IsActive = true
+        };
+
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+            return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
+
+        if (!await _roleManager.RoleExistsAsync("Staff"))
+            await _roleManager.CreateAsync(new IdentityRole<Guid> { Name = "Staff" });
+        await _userManager.AddToRoleAsync(user, "Staff");
+
+        _context.Staffs.Add(new Staff
+        {
+            UserId = user.Id,
+            Position = request.Position,
+            Department = request.Department
+        });
+
+        await _context.SaveChangesAsync();
+        return (true, "Tạo tài khoản nhân viên thành công.");
+    }
+
+    // ==================== QUẢN LÝ THUỐC ====================
+
+    public async Task<List<MedicationDto>> GetAllMedicationsAsync()
+    {
+        return await _context.Medications
+            .Where(m => !m.IsDeleted)
+            .Select(m => new MedicationDto
+            {
+                Id = m.Id,
+                Name = m.Name,
+                GenericName = m.GenericName,
+                Usage = m.Usage,
+                SideEffects = m.SideEffects,
+                Unit = m.Unit,
+                Price = m.Price,
+                InStock = m.InStock
+            }).ToListAsync();
+    }
+
+    public async Task<MedicationDto?> CreateMedicationAsync(MedicationDto request)
+    {
+        var med = new Medication
+        {
+            Name = request.Name,
+            GenericName = request.GenericName,
+            Usage = request.Usage,
+            SideEffects = request.SideEffects,
+            Unit = request.Unit,
+            Price = request.Price,
+            InStock = request.InStock
+        };
+        _context.Medications.Add(med);
+        await _context.SaveChangesAsync();
+        request.Id = med.Id;
+        return request;
+    }
+
+    public async Task<bool> UpdateMedicationAsync(Guid id, MedicationDto request)
+    {
+        var med = await _context.Medications.FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+        if (med == null) return false;
+
+        med.Name = request.Name;
+        med.GenericName = request.GenericName;
+        med.Usage = request.Usage;
+        med.SideEffects = request.SideEffects;
+        med.Unit = request.Unit;
+        med.Price = request.Price;
+        med.InStock = request.InStock;
+        med.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteMedicationAsync(Guid id)
+    {
+        var med = await _context.Medications.FirstOrDefaultAsync(m => m.Id == id);
+        if (med == null) return false;
+        med.IsDeleted = true;
         await _context.SaveChangesAsync();
         return true;
     }

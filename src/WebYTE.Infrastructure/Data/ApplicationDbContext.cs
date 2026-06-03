@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Prescription> Prescriptions { get; set; } = null!;
     public DbSet<PrescriptionDetail> PrescriptionDetails { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<Invoice> Invoices { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -104,6 +105,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(pd => pd.PrescriptionId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Invoice Relationships
+        builder.Entity<Invoice>()
+            .HasOne(i => i.Appointment)
+            .WithMany(a => a.Invoices)
+            .HasForeignKey(i => i.AppointmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Price Configuration
         builder.Entity<Doctor>()
             .Property(d => d.ConsultationFee)
@@ -111,6 +119,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         builder.Entity<Medication>()
             .Property(m => m.Price)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<Invoice>()
+            .Property(i => i.Amount)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<Invoice>()
+            .Property(i => i.TaxAmount)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<Invoice>()
+            .Property(i => i.TotalAmount)
             .HasColumnType("decimal(18,2)");
     }
 }

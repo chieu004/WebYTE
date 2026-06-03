@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,25 +15,33 @@ public class AiTriageService : IAiTriageService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly string _standardsFilePath;
 
     public AiTriageService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         
-        // Cấu hình URL mặc định nếu không có trong appsettings
         var baseUrl = _configuration["LMStudio:BaseUrl"] ?? "http://localhost:1234/v1/";
         _httpClient.BaseAddress = new Uri(baseUrl);
+
+        // Tìm file JSON tiêu chuẩn y tế từ thư mục chạy
+        var basePath = _configuration["MedicalStandards:Path"] ?? AppContext.BaseDirectory;
+        _standardsFilePath = Path.Combine(basePath, "medical-standards.json");
     }
 
     public async Task<AiTriageResponseDto> AnalyzeSymptomsAsync(AiTriageRequestDto request)
     {
-        var systemPrompt = @"Bạn là một trợ lý y khoa AI của phòng khám WebYTE. 
-Nhiệm vụ của bạn là chẩn đoán sơ bộ triệu chứng của bệnh nhân. 
-Quy tắc: 
-1. Chỉ phân tích dựa trên y học hiện đại.
-2. Từ chối trả lời các câu hỏi không liên quan đến y tế.
-3. Không được kê đơn thuốc cứng, chỉ đưa ra lời khuyên đi khám.
+        // Load tiêu chuẩn y tế từ file JSON
+        var medicalStandards = MedicalStandardsLoader.LoadAsPromptContext(_standardsFilePath);
+
+        var systemPrompt = $@"Bạn là một trợ lý y khoa AI của phòng khám WebYTE.
+
+{medicalStandards}
+
+=== NHIỆM VỤ ===
+Phân tích sơ bộ triệu chứng bệnh nhân, gợi ý chuyên khoa phù hợp và mức độ ưu tiên khám.
+Từ chối trả lời các câu hỏi không liên quan đến y tế.
 Hãy tóm tắt và đưa ra chuyên khoa phù hợp bằng tiếng Việt.";
 
         var chatRequest = new OpenAiChatRequest

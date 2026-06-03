@@ -1,0 +1,182 @@
+@page "/admin/create-account"
+@using WebYTE.Application.DTOs.Admin
+@using WebYTE.Core.Enums
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Tạo Tài Khoản - Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Class="mr-2" />
+        Tạo Tài Khoản Nhân Sự
+    </MudText>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mb-4">
+
+        <!-- TAB BÁC SĨ -->
+        <MudTabPanel Text="Tạo Tài Khoản Bác Sĩ" Icon="@Icons.Material.Filled.LocalHospital">
+            <MudCard Class="pa-4 mt-4">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Họ và Tên" @bind-Value="doctorDto.FullName" Required="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Email" @bind-Value="doctorDto.Email" Required="true" InputType="InputType.Email" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Mật khẩu" @bind-Value="doctorDto.Password" Required="true" InputType="InputType.Password" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Số Điện Thoại" @bind-Value="doctorDto.Phone" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="Gender" Label="Giới Tính" @bind-Value="doctorDto.Gender">
+                                <MudSelectItem Value="@(Gender.Male)">Nam</MudSelectItem>
+                                <MudSelectItem Value="@(Gender.Female)">Nữ</MudSelectItem>
+                                <MudSelectItem Value="@(Gender.Other)">Khác</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="Guid?" Label="Chuyên Khoa" @bind-Value="doctorDto.SpecialtyId">
+                                <MudSelectItem T="Guid?" Value="null">-- Chọn chuyên khoa --</MudSelectItem>
+                                @foreach (var s in specialties)
+                                {
+                                    <MudSelectItem T="Guid?" Value="@s.Id">@s.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Học Vấn / Bằng Cấp" @bind-Value="doctorDto.Qualifications" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Kinh Nghiệm" @bind-Value="doctorDto.Experience" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudNumericField T="decimal" Label="Phí Khám (VNĐ)" @bind-Value="doctorDto.ConsultationFee" Min="0" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Giới Thiệu" @bind-Value="doctorDto.Bio" Lines="3" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+                <MudCardActions Class="pa-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateDoctor" Disabled="isDoctorLoading">
+                        @if (isDoctorLoading) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Tạo Tài Khoản Bác Sĩ
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudTabPanel>
+
+        <!-- TAB NHÂN VIÊN -->
+        <MudTabPanel Text="Tạo Tài Khoản Nhân Viên" Icon="@Icons.Material.Filled.Badge">
+            <MudCard Class="pa-4 mt-4">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Họ và Tên" @bind-Value="staffDto.FullName" Required="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Email" @bind-Value="staffDto.Email" Required="true" InputType="InputType.Email" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Mật khẩu" @bind-Value="staffDto.Password" Required="true" InputType="InputType.Password" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Số Điện Thoại" @bind-Value="staffDto.Phone" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="Gender" Label="Giới Tính" @bind-Value="staffDto.Gender">
+                                <MudSelectItem Value="@(Gender.Male)">Nam</MudSelectItem>
+                                <MudSelectItem Value="@(Gender.Female)">Nữ</MudSelectItem>
+                                <MudSelectItem Value="@(Gender.Other)">Khác</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Chức Vụ" @bind-Value="staffDto.Position" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Label="Phòng Ban" @bind-Value="staffDto.Department" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+                <MudCardActions Class="pa-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="CreateStaff" Disabled="isStaffLoading">
+                        @if (isStaffLoading) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                        Tạo Tài Khoản Nhân Viên
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudTabPanel>
+
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private CreateDoctorAccountDto doctorDto = new() { Gender = Gender.Male };
+    private CreateStaffAccountDto staffDto = new() { Gender = Gender.Male };
+    private List<SpecialtyDto> specialties = new();
+    private bool isDoctorLoading, isStaffLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            specialties = await Http.GetFromJsonAsync<List<SpecialtyDto>>("api/admin/specialties") ?? new();
+        }
+        catch { }
+    }
+
+    private async Task CreateDoctor()
+    {
+        isDoctorLoading = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/admin/doctors/create", doctorDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Tạo tài khoản bác sĩ thành công!", Severity.Success);
+                doctorDto = new() { Gender = Gender.Male };
+            }
+            else
+            {
+                var err = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                Snackbar.Add(err?.Message ?? "Tạo thất bại.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+        finally { isDoctorLoading = false; }
+    }
+
+    private async Task CreateStaff()
+    {
+        isStaffLoading = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/admin/staffs/create", staffDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Tạo tài khoản nhân viên thành công!", Severity.Success);
+                staffDto = new() { Gender = Gender.Male };
+            }
+            else
+            {
+                var err = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                Snackbar.Add(err?.Message ?? "Tạo thất bại.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+        finally { isStaffLoading = false; }
+    }
+
+    private class ErrorResponse { public string? Message { get; set; } }
+}

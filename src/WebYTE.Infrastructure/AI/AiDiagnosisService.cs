@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using WebYTE.Application.DTOs.AI;
 using WebYTE.Application.Interfaces;
 
@@ -9,11 +10,14 @@ namespace WebYTE.Infrastructure.AI;
 public class AiDiagnosisService : IAiDiagnosisService
 {
     private readonly HttpClient _httpClient;
+    private readonly string _standardsFilePath;
     private const string LM_STUDIO_URL = "http://localhost:1234/v1/chat/completions";
 
-    public AiDiagnosisService(HttpClient httpClient)
+    public AiDiagnosisService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        var basePath = configuration["MedicalStandards:Path"] ?? AppContext.BaseDirectory;
+        _standardsFilePath = Path.Combine(basePath, "medical-standards.json");
     }
 
     public async Task<AiDiagnosisResponse> DiagnoseAsync(AiDiagnosisRequest request)
@@ -82,31 +86,35 @@ public class AiDiagnosisService : IAiDiagnosisService
 
     private string GetSystemPrompt()
     {
-        return @"Bạn là một trợ lý y tế AI chuyên nghiệp. Nhiệm vụ của bạn là phân tích triệu chứng và đưa ra các khả năng bệnh lý có thể xảy ra.
+        // Load tiêu chuẩn y tế từ file JSON
+        var medicalStandards = MedicalStandardsLoader.LoadAsPromptContext(_standardsFilePath);
 
-QUAN TRỌNG:
-- Đây chỉ là tham khảo, KHÔNG thay thế chẩn đoán của bác sĩ
-- Luôn khuyên bệnh nhân đến gặp bác sĩ
+        return $@"Bạn là một trợ lý y tế AI chuyên nghiệp của hệ thống WebYTE.
+
+{medicalStandards}
+
+=== NHIỆM VỤ ===
+Phân tích triệu chứng bệnh nhân và đưa ra các khả năng bệnh lý có thể xảy ra.
 - Đưa ra 2-4 khả năng bệnh lý phổ biến nhất
 - Đánh giá mức độ nghiêm trọng từ 1-5
-- Gợi ý xét nghiệm cần thiết
-- Đưa ra lời khuyên chung
+- Gợi ý xét nghiệm cần thiết theo tiêu chuẩn
+- Đưa ra lời khuyên phù hợp
 
 Trả lời theo định dạng JSON sau:
-{
+{{
   ""possibleConditions"": [
-    {
+    {{
       ""name"": ""Tên bệnh"",
       ""description"": ""Mô tả ngắn gọn"",
       ""probability"": 70,
       ""commonSymptoms"": [""triệu chứng 1"", ""triệu chứng 2""],
       ""recommendation"": ""Khuyến nghị""
-    }
+    }}
   ],
   ""recommendedTests"": [""Xét nghiệm 1"", ""Xét nghiệm 2""],
   ""generalAdvice"": [""Lời khuyên 1"", ""Lời khuyên 2""],
   ""severityLevel"": 3
-}";
+}}";
     }
 
     private string BuildDiagnosisPrompt(AiDiagnosisRequest request)

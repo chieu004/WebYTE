@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebYTE.Application.DTOs.Admin;
 using WebYTE.Application.DTOs.Doctor;
+using WebYTE.Application.DTOs.Medication;
 using WebYTE.Application.DTOs.Patient;
 using WebYTE.Application.DTOs.Staff;
 
@@ -15,6 +16,16 @@ public interface IAdminService
     
     Task<List<SpecialtyDto>> GetAllSpecialtiesAsync();
     Task<SpecialtyDto?> CreateSpecialtyAsync(SpecialtyDto request);
+
+    // Tạo tài khoản bác sĩ / nhân viên
+    Task<(bool Success, string Message)> CreateDoctorAccountAsync(CreateDoctorAccountDto request);
+    Task<(bool Success, string Message)> CreateStaffAccountAsync(CreateStaffAccountDto request);
+
+    // Quản lý thuốc
+    Task<List<MedicationDto>> GetAllMedicationsAsync();
+    Task<MedicationDto?> CreateMedicationAsync(MedicationDto request);
+    Task<bool> UpdateMedicationAsync(Guid id, MedicationDto request);
+    Task<bool> DeleteMedicationAsync(Guid id);
     
     // Quản lý Doctor
     Task<List<DoctorProfileDto>> GetAllDoctorsAsync();

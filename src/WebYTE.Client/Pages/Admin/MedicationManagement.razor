@@ -1,0 +1,175 @@
+@page "/admin/medications"
+@using WebYTE.Application.DTOs.Medication
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Quản Lý Thuốc - Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+        <MudText Typo="Typo.h4" Color="Color.Primary">
+            <MudIcon Icon="@Icons.Material.Filled.Medication" Size="Size.Large" Class="mr-2" />
+            Quản Lý Thuốc
+        </MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog">Thêm Thuốc Mới</MudButton>
+    </MudStack>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@medications" Hover="true" Elevation="3" Filter="FilterFunc">
+            <ToolBarContent>
+                <MudTextField @bind-Value="searchText" Placeholder="Tìm kiếm thuốc..." Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Tên Thuốc</MudTh>
+                <MudTh>Tên Gốc</MudTh>
+                <MudTh>Đơn Vị</MudTh>
+                <MudTh>Giá (VNĐ)</MudTh>
+                <MudTh>Tồn Kho</MudTh>
+                <MudTh>Thao Tác</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="med">
+                <MudTd>@med.Name</MudTd>
+                <MudTd>@med.GenericName</MudTd>
+                <MudTd>@med.Unit</MudTd>
+                <MudTd>@med.Price.ToString("N0")</MudTd>
+                <MudTd>
+                    <MudChip T="string" Color="@(med.InStock > 10 ? Color.Success : Color.Warning)" Size="Size.Small">
+                        @med.InStock
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                   OnClick="@(() => OpenEditDialog(med))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => DeleteMedication(med.Id))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+<!-- Dialog Thêm/Sửa Thuốc -->
+<MudDialog @bind-Visible="showDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(isEditing ? "Cập Nhật Thuốc" : "Thêm Thuốc Mới")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField T="string" Label="Tên Thuốc" @bind-Value="editDto.Name" Required="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField T="string" Label="Tên Gốc (Generic)" @bind-Value="editDto.GenericName" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField T="string" Label="Đơn Vị (Viên/Vỉ/Hộp)" @bind-Value="editDto.Unit" Required="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="decimal" Label="Giá (VNĐ)" @bind-Value="editDto.Price" Min="0" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int" Label="Số Lượng Tồn Kho" @bind-Value="editDto.InStock" Min="0" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="string" Label="Cách Dùng" @bind-Value="editDto.Usage" Lines="2" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="string" Label="Tác Dụng Phụ" @bind-Value="editDto.SideEffects" Lines="2" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showDialog = false)">Hủy</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveMedication" Disabled="isSaving">
+            @if (isSaving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            @(isEditing ? "Cập Nhật" : "Thêm Mới")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<MedicationDto> medications = new();
+    private MedicationDto editDto = new();
+    private bool isLoading, showDialog, isEditing, isSaving;
+    private string searchText = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await LoadMedications();
+
+    private async Task LoadMedications()
+    {
+        isLoading = true;
+        try { medications = await Http.GetFromJsonAsync<List<MedicationDto>>("api/admin/medications") ?? new(); }
+        catch { Snackbar.Add("Lỗi tải danh sách thuốc.", Severity.Error); }
+        finally { isLoading = false; }
+    }
+
+    private void OpenCreateDialog()
+    {
+        editDto = new MedicationDto();
+        isEditing = false;
+        showDialog = true;
+    }
+
+    private void OpenEditDialog(MedicationDto med)
+    {
+        editDto = new MedicationDto
+        {
+            Id = med.Id, Name = med.Name, GenericName = med.GenericName,
+            Usage = med.Usage, SideEffects = med.SideEffects,
+            Unit = med.Unit, Price = med.Price, InStock = med.InStock
+        };
+        isEditing = true;
+        showDialog = true;
+    }
+
+    private async Task SaveMedication()
+    {
+        isSaving = true;
+        try
+        {
+            HttpResponseMessage response;
+            if (isEditing)
+                response = await Http.PutAsJsonAsync($"api/admin/medications/{editDto.Id}", editDto);
+            else
+                response = await Http.PostAsJsonAsync("api/admin/medications", editDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(isEditing ? "Cập nhật thành công!" : "Thêm thuốc thành công!", Severity.Success);
+                showDialog = false;
+                await LoadMedications();
+            }
+            else
+            {
+                Snackbar.Add("Thao tác thất bại.", Severity.Error);
+            }
+        }
+        catch (Exception ex) { Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error); }
+        finally { isSaving = false; }
+    }
+
+    private async Task DeleteMedication(Guid id)
+    {
+        var response = await Http.DeleteAsync($"api/admin/medications/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Xóa thuốc thành công!", Severity.Success);
+            await LoadMedications();
+        }
+        else Snackbar.Add("Xóa thất bại.", Severity.Error);
+    }
+
+    private bool FilterFunc(MedicationDto med) =>
+        string.IsNullOrEmpty(searchText) ||
+        med.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+        (med.GenericName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false);
+}

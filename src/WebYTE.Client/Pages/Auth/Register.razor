@@ -34,12 +34,7 @@
                               Required="true" InputType="InputType.Email" Class="mb-3"/>
                 
                 <MudTextField T="string" Label="Mật khẩu (Tối thiểu 6 ký tự)" @bind-Value="registerRequest.Password"
-                              Required="true" InputType="InputType.Password" Class="mb-3"/>
-                              
-                <MudSelect T="RoleType" Label="Bạn là ai?" @bind-Value="registerRequest.Role" Class="mb-6">
-                    <MudSelectItem Value="@(RoleType.Patient)">Bệnh Nhân</MudSelectItem>
-                    <MudSelectItem Value="@(RoleType.Doctor)">Bác Sĩ</MudSelectItem>
-                </MudSelect>
+                              Required="true" InputType="InputType.Password" Class="mb-6"/>
 
                 @if(!string.IsNullOrEmpty(errorMessage))
                 {

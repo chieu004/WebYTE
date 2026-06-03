@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using WebYTE.Core.Enums;
 
 namespace WebYTE.Core.Entities;
@@ -19,4 +20,7 @@ public class Appointment : BaseEntity
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     
     public MedicalRecord? MedicalRecord { get; set; }
+    
+    // Invoice relationship
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 }

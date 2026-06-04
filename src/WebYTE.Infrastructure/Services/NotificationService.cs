@@ -112,6 +112,17 @@ public class NotificationService : INotificationService
             .CountAsync(n => n.UserId == userId && !n.IsRead);
     }
 
+    public async Task DeleteOldNotificationsAsync(int daysOld = 7)
+    {
+        var cutoffDate = DateTime.Now.AddDays(-daysOld);
+        var oldNotifications = await _context.Notifications
+            .Where(n => n.CreatedAt < cutoffDate && n.IsRead)
+            .ToListAsync();
+
+        _context.Notifications.RemoveRange(oldNotifications);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task SendAppointmentReminderAsync(Guid appointmentId)
     {
         var appointment = await _context.Appointments

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebYTE.Application.DTOs.Appointment;
+using WebYTE.Application.DTOs.Notification;
 using WebYTE.Application.DTOs.Staff;
 using WebYTE.Application.Interfaces;
 using WebYTE.Core.Enums;
@@ -14,10 +15,12 @@ namespace WebYTE.Infrastructure.Services;
 public class StaffService : IStaffService
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public StaffService(ApplicationDbContext context)
+    public StaffService(ApplicationDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<StaffProfileDto?> GetProfileAsync(Guid userId)
@@ -110,7 +113,12 @@ public class StaffService : IStaffService
     {
         Console.WriteLine($"[DEBUG] Service - Finding appointment: {appointmentId}");
         
-        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        var appointment = await _context.Appointments
+            .Include(a => a.Patient)
+                .ThenInclude(p => p.User)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.User)
+            .FirstOrDefaultAsync(a => a.Id == appointmentId);
         
         if (appointment == null)
         {
@@ -125,6 +133,47 @@ public class StaffService : IStaffService
         var changes = await _context.SaveChangesAsync();
         
         Console.WriteLine($"[DEBUG] Service - SaveChanges result: {changes} rows affected");
+
+        // Gửi thông báo dựa trên trạng thái
+        if (status == AppointmentStatus.Confirmed)
+        {
+            // Thông báo cho bệnh nhân
+            await _notificationService.CreateNotificationAsync(
+                appointment.Patient.UserId,
+                "Lịch hẹn đã được xác nhận",
+                $"Lịch hẹn với BS. {appointment.Doctor.User.FullName} vào {appointment.AppointmentDate:dd/MM/yyyy HH:mm} đã được xác nhận",
+                NotificationType.AppointmentConfirmed,
+                appointmentId
+            );
+
+            // Thông báo cho bác sĩ
+            await _notificationService.CreateNotificationAsync(
+                appointment.Doctor.UserId,
+                "Lịch hẹn đã được xác nhận",
+                $"Lịch hẹn với bệnh nhân {appointment.Patient.User.FullName} vào {appointment.AppointmentDate:dd/MM/yyyy HH:mm} đã được xác nhận",
+                NotificationType.AppointmentConfirmed,
+                appointmentId
+            );
+        }
+        else if (status == AppointmentStatus.Cancelled)
+        {
+            // Thông báo hủy lịch
+            await _notificationService.CreateNotificationAsync(
+                appointment.Patient.UserId,
+                "Lịch hẹn đã bị hủy",
+                $"Lịch hẹn với BS. {appointment.Doctor.User.FullName} vào {appointment.AppointmentDate:dd/MM/yyyy HH:mm} đã bị hủy",
+                NotificationType.AppointmentCancelled,
+                appointmentId
+            );
+
+            await _notificationService.CreateNotificationAsync(
+                appointment.Doctor.UserId,
+                "Lịch hẹn đã bị hủy",
+                $"Lịch hẹn với bệnh nhân {appointment.Patient.User.FullName} vào {appointment.AppointmentDate:dd/MM/yyyy HH:mm} đã bị hủy",
+                NotificationType.AppointmentCancelled,
+                appointmentId
+            );
+        }
         
         return true;
     }

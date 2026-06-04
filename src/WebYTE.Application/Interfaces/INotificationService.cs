@@ -10,4 +10,5 @@ public interface INotificationService
     Task<bool> MarkAllAsReadAsync(Guid userId);
     Task<int> GetUnreadCountAsync(Guid userId);
     Task SendAppointmentReminderAsync(Guid appointmentId);
+    Task DeleteOldNotificationsAsync(int daysOld = 7);
 }

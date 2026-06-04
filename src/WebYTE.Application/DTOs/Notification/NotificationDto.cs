@@ -14,10 +14,11 @@ public class NotificationDto
 
 public enum NotificationType
 {
+    General,
     AppointmentReminder,
+    NewAppointment,
     AppointmentConfirmed,
     AppointmentCancelled,
     MedicalRecordCreated,
-    PrescriptionCreated,
-    General
+    PrescriptionCreated
 }

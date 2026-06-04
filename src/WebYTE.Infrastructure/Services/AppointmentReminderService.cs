@@ -29,6 +29,9 @@ public class AppointmentReminderService : BackgroundService
             try
             {
                 await CheckAndSendReminders();
+                
+                // Xóa thông báo cũ đã đọc (cũ hơn 7 ngày)
+                await DeleteOldNotifications();
             }
             catch (Exception ex)
             {
@@ -38,6 +41,14 @@ public class AppointmentReminderService : BackgroundService
             // Check every 30 minutes
             await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
         }
+    }
+
+    private async Task DeleteOldNotifications()
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var notificationService = scope.ServiceProvider.GetRequiredService<Application.Interfaces.INotificationService>();
+        
+        await notificationService.DeleteOldNotificationsAsync(7); // Xóa thông báo đã đọc cũ hơn 7 ngày
     }
 
     private async Task CheckAndSendReminders()

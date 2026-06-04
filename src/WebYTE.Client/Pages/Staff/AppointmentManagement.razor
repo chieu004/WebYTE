@@ -282,11 +282,20 @@
             {
                 var invoiceId = await response.Content.ReadFromJsonAsync<Guid>();
                 
-                // Mở hóa đơn trong tab mới
-                var url = $"/invoice/{invoiceId}";
-                await JSRuntime.InvokeAsync<object>("open", url, "_blank");
+                // Cập nhật trạng thái thanh toán sang "Đã thanh toán"
+                var updateResponse = await Http.PutAsJsonAsync($"api/staff/appointments/{appointmentId}/payment", new { PaymentStatus = 3 });
                 
-                Snackbar.Add("Đang mở hóa đơn...", Severity.Info);
+                if (updateResponse.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Đã xuất hóa đơn và cập nhật trạng thái thanh toán", Severity.Success);
+                    
+                    // Reload data
+                    await LoadAppointments();
+                }
+                
+                // Mở hóa đơn trong tab mới - Sử dụng InvokeVoidAsync để tránh lỗi circular reference
+                var url = $"/invoice/{invoiceId}";
+                await JSRuntime.InvokeVoidAsync("open", url, "_blank");
             }
             else
             {

@@ -174,6 +174,19 @@ public class InvoiceService : IInvoiceService
         return dto;
     }
 
+    public async Task<bool> UpdateInvoiceStatusAsync(Guid invoiceId, InvoiceStatus status)
+    {
+        var invoice = await _context.Invoices.FindAsync(invoiceId);
+        if (invoice == null)
+            return false;
+
+        invoice.Status = status;
+        invoice.UpdatedAt = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     private string GenerateInvoiceNumber()
     {
         // Format: INV-YYYYMMDD-XXXXX

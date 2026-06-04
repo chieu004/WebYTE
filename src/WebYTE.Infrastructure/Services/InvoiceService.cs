@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using WebYTE.Application.DTOs.Invoice;
 using WebYTE.Application.Interfaces;
 using WebYTE.Core.Entities;
@@ -14,152 +14,171 @@ namespace WebYTE.Infrastructure.Services;
 public class InvoiceService : IInvoiceService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public InvoiceService(ApplicationDbContext context)
+    public InvoiceService(ApplicationDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
-    public async Task<InvoiceDto?> CreateInvoiceAsync(Guid appointmentId, decimal amount, decimal taxAmount = 0, string? notes = null)
+    public async Task<Guid> GenerateInvoiceAsync(Guid appointmentId)
     {
+        // Lấy thông tin appointment với tất cả các thông tin liên quan
         var appointment = await _context.Appointments
             .Include(a => a.Patient)
-            .ThenInclude(p => p.User)
+                .ThenInclude(p => p.User)
             .Include(a => a.Doctor)
-            .ThenInclude(d => d.User)
+                .ThenInclude(d => d.User)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.Specialty)
+            .Include(a => a.MedicalRecord)
+                .ThenInclude(mr => mr!.Prescription)
+                    .ThenInclude(p => p!.Details)
+                        .ThenInclude(pd => pd.Medication)
             .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
         if (appointment == null)
-            return null;
+            throw new Exception("Không tìm thấy cuộc hẹn");
 
-        // Generate Invoice Number: INV-YYYYMMDD-XXXXX
-        var today = DateTime.UtcNow;
-        var invoiceCount = await _context.Invoices
-            .Where(i => i.IssuedDate.Year == today.Year 
-                && i.IssuedDate.Month == today.Month 
-                && i.IssuedDate.Day == today.Day)
-            .CountAsync();
+        // Kiểm tra xem đã có invoice chưa
+        var existingInvoice = await _context.Invoices
+            .FirstOrDefaultAsync(i => i.AppointmentId == appointmentId);
 
-        var invoiceNumber = $"INV-{today:yyyyMMdd}-{(invoiceCount + 1):D5}";
+        if (existingInvoice != null)
+            return existingInvoice.Id; // Trả về invoice đã có
 
-        var totalAmount = amount + taxAmount;
+        // Tính toán chi phí
+        decimal consultationFee = appointment.Doctor.ConsultationFee;
+        decimal medicationTotal = 0;
 
+        // Tính tổng tiền thuốc nếu có đơn thuốc
+        if (appointment.MedicalRecord?.Prescription != null)
+        {
+            medicationTotal = appointment.MedicalRecord.Prescription.Details
+                .Sum(pd => pd.Quantity * pd.Medication.Price);
+        }
+
+        decimal totalAmount = consultationFee + medicationTotal;
+        decimal taxAmount = totalAmount * 0.08m; // VAT 8%
+        decimal finalAmount = totalAmount + taxAmount;
+
+        // Tạo invoice
         var invoice = new Invoice
         {
+            Id = Guid.NewGuid(),
             AppointmentId = appointmentId,
-            InvoiceNumber = invoiceNumber,
-            IssuedDate = today,
-            DueDate = today.AddDays(30), // Hạn thanh toán 30 ngày
-            Amount = amount,
+            InvoiceNumber = GenerateInvoiceNumber(),
+            IssuedDate = DateTime.Now,
+            DueDate = DateTime.Now.AddDays(7), // 7 ngày
+            Amount = totalAmount,
             TaxAmount = taxAmount,
-            TotalAmount = totalAmount,
+            TotalAmount = finalAmount,
             Status = InvoiceStatus.Created,
-            Notes = notes
+            CreatedAt = DateTime.Now
         };
 
         _context.Invoices.Add(invoice);
         await _context.SaveChangesAsync();
 
-        return new InvoiceDto
-        {
-            Id = invoice.Id,
-            AppointmentId = invoice.AppointmentId,
-            InvoiceNumber = invoice.InvoiceNumber,
-            IssuedDate = invoice.IssuedDate,
-            DueDate = invoice.DueDate,
-            PatientName = appointment.Patient.User.FullName,
-            DoctorName = appointment.Doctor.User.FullName,
-            Amount = invoice.Amount,
-            TaxAmount = invoice.TaxAmount,
-            TotalAmount = invoice.TotalAmount,
-            Status = invoice.Status,
-            Notes = invoice.Notes
-        };
+        return invoice.Id;
     }
 
-    public async Task<InvoiceDto?> GetInvoiceByAppointmentIdAsync(Guid appointmentId)
+    public async Task<InvoiceDto?> GetInvoiceDetailsAsync(Guid invoiceId)
     {
         var invoice = await _context.Invoices
             .Include(i => i.Appointment)
-            .ThenInclude(a => a.Patient)
-            .ThenInclude(p => p.User)
+                .ThenInclude(a => a.Patient)
+                    .ThenInclude(p => p.User)
             .Include(i => i.Appointment)
-            .ThenInclude(a => a.Doctor)
-            .ThenInclude(d => d.User)
-            .FirstOrDefaultAsync(i => i.AppointmentId == appointmentId);
-
-        if (invoice == null)
-            return null;
-
-        return MapToDto(invoice);
-    }
-
-    public async Task<InvoiceDto?> GetInvoiceByIdAsync(Guid invoiceId)
-    {
-        var invoice = await _context.Invoices
+                .ThenInclude(a => a.Doctor)
+                    .ThenInclude(d => d.User)
             .Include(i => i.Appointment)
-            .ThenInclude(a => a.Patient)
-            .ThenInclude(p => p.User)
+                .ThenInclude(a => a.Doctor)
+                    .ThenInclude(d => d.Specialty)
             .Include(i => i.Appointment)
-            .ThenInclude(a => a.Doctor)
-            .ThenInclude(d => d.User)
+                .ThenInclude(a => a.MedicalRecord)
+                    .ThenInclude(mr => mr!.Prescription)
+                        .ThenInclude(p => p!.Details)
+                            .ThenInclude(pd => pd.Medication)
             .FirstOrDefaultAsync(i => i.Id == invoiceId);
 
         if (invoice == null)
             return null;
 
-        return MapToDto(invoice);
-    }
+        var appointment = invoice.Appointment;
+        var patient = appointment.Patient;
+        var doctor = appointment.Doctor;
 
-    public async Task<List<InvoiceDto>> GetInvoicesByPatientIdAsync(Guid patientId)
-    {
-        var invoices = await _context.Invoices
-            .Include(i => i.Appointment)
-            .ThenInclude(a => a.Patient)
-            .ThenInclude(p => p.User)
-            .Include(i => i.Appointment)
-            .ThenInclude(a => a.Doctor)
-            .ThenInclude(d => d.User)
-            .Where(i => i.Appointment.PatientId == patientId)
-            .OrderByDescending(i => i.IssuedDate)
-            .ToListAsync();
-
-        return invoices.Select(MapToDto).ToList();
-    }
-
-    public async Task<bool> MarkAsSentAsync(Guid invoiceId)
-    {
-        var invoice = await _context.Invoices.FindAsync(invoiceId);
-        if (invoice == null)
-            return false;
-
-        invoice.Status = InvoiceStatus.Sent;
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
-    public Task<byte[]> ExportInvoicePdfAsync(Guid invoiceId)
-    {
-        // TODO: Implement PDF export using a library like iTextSharp or SelectPdf
-        throw new NotImplementedException("PDF export will be implemented soon");
-    }
-
-    private InvoiceDto MapToDto(Invoice invoice)
-    {
-        return new InvoiceDto
+        var dto = new InvoiceDto
         {
             Id = invoice.Id,
             AppointmentId = invoice.AppointmentId,
             InvoiceNumber = invoice.InvoiceNumber,
             IssuedDate = invoice.IssuedDate,
             DueDate = invoice.DueDate,
-            PatientName = invoice.Appointment.Patient.User.FullName,
-            DoctorName = invoice.Appointment.Doctor.User.FullName,
-            Amount = invoice.Amount,
+
+            // Thông tin bệnh nhân
+            PatientName = patient.User.FullName,
+            PatientPhone = patient.User.PhoneNumber ?? "",
+            PatientAddress = patient.User.Address ?? "",
+
+            // Thông tin bác sĩ
+            DoctorName = doctor.User.FullName,
+            SpecialtyName = doctor.Specialty?.Name ?? "",
+
+            // Thông tin cuộc hẹn
+            AppointmentDate = appointment.AppointmentDate,
+            Reason = appointment.Reason ?? "",
+            Diagnosis = appointment.MedicalRecord?.Diagnosis ?? "",
+
+            // Chi phí
+            ConsultationFee = doctor.ConsultationFee,
+            MedicationTotal = 0,
             TaxAmount = invoice.TaxAmount,
             TotalAmount = invoice.TotalAmount,
+
             Status = invoice.Status,
-            Notes = invoice.Notes
+            Notes = invoice.Notes,
+            
+            // Thông tin ngân hàng từ appsettings
+            BankingInfo = new BankingInfoDto
+            {
+                BankId = _configuration["BankingInfo:BankId"] ?? "970436",
+                BankName = _configuration["BankingInfo:BankName"] ?? "Vietcombank",
+                AccountNo = _configuration["BankingInfo:AccountNo"] ?? "1234567890",
+                AccountName = _configuration["BankingInfo:AccountName"] ?? "PHONG KHAM WEBYTE"
+            }
         };
+
+        // Thêm thông tin thuốc nếu có
+        if (appointment.MedicalRecord?.Prescription != null)
+        {
+            foreach (var detail in appointment.MedicalRecord.Prescription.Details)
+            {
+                var medDto = new InvoiceMedicationDto
+                {
+                    MedicationName = detail.Medication.Name,
+                    Dosage = detail.Dosage,
+                    Quantity = detail.Quantity,
+                    UnitPrice = detail.Medication.Price,
+                    TotalPrice = detail.Quantity * detail.Medication.Price,
+                    Instructions = detail.Instructions
+                };
+
+                dto.Medications.Add(medDto);
+                dto.MedicationTotal += medDto.TotalPrice;
+            }
+        }
+
+        return dto;
+    }
+
+    private string GenerateInvoiceNumber()
+    {
+        // Format: INV-YYYYMMDD-XXXXX
+        var date = DateTime.Now.ToString("yyyyMMdd");
+        var random = new Random().Next(10000, 99999);
+        return $"INV-{date}-{random}";
     }
 }

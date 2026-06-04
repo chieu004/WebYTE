@@ -77,6 +77,7 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 // AI Services - Tăng timeout cho LM Studio (model có thể chậm)
 builder.Services.AddHttpClient<IAiTriageService, AiTriageService>(client =>
